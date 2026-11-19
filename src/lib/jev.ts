@@ -32,6 +32,8 @@ export interface JevJob {
   state: Record<string, unknown>;
   questions: Record<string, DecisionQuestion>;
   sections: string[];
+  /** True when Jev saw only part of the draft (long drafts). */
+  partial: boolean;
 }
 
 const ONLY_STATE =
@@ -92,6 +94,7 @@ export function buildJobs(
   const picked = selectSections(sections, query);
   const DRAFT = picked.map((s) => ({ section: s.heading || 'Untitled section', text: s.text }));
   const sectionNames = picked.map((s) => s.heading || 'Untitled section');
+  const partial = picked.length < sections.length || picked.some((s) => s.text.endsWith('[cut]'));
   const jobs: JevJob[] = [];
 
   const coverage = req.questions.filter((q) => q.kind === 'coverage');
@@ -103,6 +106,7 @@ export function buildJobs(
       state: { DRAFT },
       questions: Object.fromEntries(coverage.map((q) => [q.id, coverageQuestion(req, q, docName)])),
       sections: sectionNames,
+      partial,
     });
   }
   const claims = req.questions.filter((q) => q.kind === 'claim');
@@ -118,6 +122,7 @@ export function buildJobs(
       state: { DRAFT, EVIDENCE },
       questions: Object.fromEntries(claims.map((q) => [q.id, claimQuestion(req, q, docName)])),
       sections: sectionNames,
+      partial,
     });
   }
   return jobs;
@@ -168,7 +173,8 @@ export function scoreRequirement(
     reqId: req.id,
     at: Date.now(),
     questions,
-    score: Math.round(min * 100),
+    // Rounded down so the number never reads 80 while the colour says it is below 80.
+    score: Math.floor(min * 100 + 1e-9),
     passed,
     total,
     tone,

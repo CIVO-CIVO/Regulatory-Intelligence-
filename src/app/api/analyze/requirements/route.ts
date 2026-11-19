@@ -47,7 +47,7 @@ Build the requirement map now.`;
 
     // Every requirement must quote the uploaded text. Unverifiable ones are dropped, never shown.
     const byId = new Map(body.sources.map((s) => [s.id, s]));
-    const categories = [...out.categories];
+    const categories = [...new Set(out.categories.map((c) => c.trim()).filter(Boolean))];
     const requirements: Requirement[] = [];
     const dropped: DroppedRequirement[] = [];
     const seen = new Set<string>();
@@ -68,6 +68,7 @@ Build the requirement map now.`;
       const key = `${quote.docId}:${quote.start}:${r.title.toLowerCase()}`;
       if (seen.has(key)) continue;
       seen.add(key);
+      r.category = r.category.trim();
       if (!categories.includes(r.category)) categories.push(r.category);
       requirements.push({
         id: '',

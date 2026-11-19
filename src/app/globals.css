@@ -119,3 +119,8 @@ mark.quote-hit {
     transition: none !important;
   }
 }
+
+/* The draft is the main writing surface: no focus ring box around the whole page of text. */
+.draft-area:focus-visible {
+  outline: none;
+}

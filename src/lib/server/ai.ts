@@ -23,17 +23,19 @@ const LLM = {
 } as const;
 export type LlmTier = keyof typeof LLM;
 
-const onVercel = Boolean(process.env.VERCEL);
+// Dev-only backends need an explicit opt-in and are refused on Vercel and in production builds.
+const devBackendsAllowed =
+  !process.env.VERCEL && (process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_BACKENDS === '1');
 const GATEWAY_OPTS = { gateway: { zeroDataRetention: true } };
 
 export function jevBackend(): 'mock' | 'typesafe' | 'gateway' {
-  if (process.env.JEV_BACKEND === 'mock' && !onVercel) return 'mock';
+  if (process.env.JEV_BACKEND === 'mock' && devBackendsAllowed) return 'mock';
   if (process.env.TYPESAFE_API_KEY?.trim()) return 'typesafe';
   return 'gateway';
 }
 
 export function llmBackend(): 'claude-cli' | 'anthropic' | 'gateway' {
-  if (process.env.LLM_BACKEND === 'claude-cli' && !onVercel) return 'claude-cli';
+  if (process.env.LLM_BACKEND === 'claude-cli' && devBackendsAllowed) return 'claude-cli';
   if (process.env.ANTHROPIC_API_KEY?.trim()) return 'anthropic';
   return 'gateway';
 }
@@ -165,18 +167,30 @@ async function typesafeDecide(
 
 /** Turn provider errors into a short message the UI can show and act on. */
 export function describeAiError(err: unknown): { message: string; code: string } {
-  const text = String((err as { message?: string })?.message ?? err);
-  const body = JSON.stringify(err, Object.getOwnPropertyNames(err ?? {})).slice(0, 4000);
-  if (/customer_verification_required|credit card/i.test(text + body)) {
+  type E = { message?: string; statusCode?: number; responseBody?: string; type?: string; lastError?: E; cause?: E; errors?: E[] };
+  const chain: E[] = [];
+  const walk = (e: E | undefined, depth = 0) => {
+    if (!e || depth > 4 || typeof e !== 'object') return;
+    chain.push(e);
+    walk(e.lastError, depth + 1);
+    walk(e.cause, depth + 1);
+    e.errors?.forEach((x) => walk(x, depth + 1));
+  };
+  walk(err as E);
+  // Only status codes, error types and response bodies count; never stack traces.
+  const bodies = chain.map((e) => `${e.type ?? ''} ${e.responseBody ?? ''}`).join(' ');
+  const statuses = chain.map((e) => e.statusCode).filter((x): x is number => typeof x === 'number');
+  const text = String((err as E)?.message ?? err);
+  if (/customer_verification_required|credit card on file/i.test(`${bodies} ${text}`)) {
     return {
       code: 'gateway_card_required',
       message:
         'The AI connection is not active yet: the Vercel team needs a payment card on file for AI Gateway. Add it in Vercel (team settings, AI Gateway) and try again.',
     };
   }
-  if (/oidc|unauthori[sz]ed|401|authentication/i.test(text + body)) {
+  if (statuses.includes(401) || statuses.includes(403) || /authentication_error|invalid_api_key|oidc token/i.test(bodies)) {
     return { code: 'auth', message: 'The AI connection could not authenticate. Check the deployment settings.' };
   }
-  if (/429|rate limit/i.test(text)) return { code: 'rate_limit', message: 'The AI service is busy. Try again in a moment.' };
+  if (statuses.includes(429)) return { code: 'rate_limit', message: 'The AI service is busy. Try again in a moment.' };
   return { code: 'error', message: text.slice(0, 300) };
 }

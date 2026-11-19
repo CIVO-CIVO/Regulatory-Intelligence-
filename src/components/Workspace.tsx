@@ -12,6 +12,8 @@ import { IconAlert, IconCheck, IconMenu, Spinner } from './Icons';
 
 /** Re-check after this many words written or removed since the last check (pastes check at once). */
 export const WORDS_PER_CHECK = 100;
+/** After a pause in typing, unchecked edits are checked too. */
+const IDLE_CHECK_MS = 15_000;
 
 export interface CheckState {
   running: boolean;
@@ -30,7 +32,7 @@ export default function Workspace({
 }: {
   project: Project;
   projects: ProjectSummary[];
-  update: (fn: (p: Project) => Project, immediate?: boolean) => void;
+  update: (fn: (p: Project) => Project, immediate?: boolean, projectId?: string) => void;
   onOpen: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
@@ -52,42 +54,64 @@ export default function Workspace({
 
   const words = useMemo(() => countWords(project.draft), [project.draft]);
 
+  const disposed = useRef(false);
+  const gen = useRef(0); // bumped when results of an older check must be ignored (rebuild)
+  const rebuilding = useRef(false);
+  const idle = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Every update is tagged with this project's id, so a late result can never land in another project.
+  const updateSelf = useCallback(
+    (fn: (p: Project) => Project, immediate?: boolean) => update(fn, immediate, project.id),
+    [update, project.id],
+  );
+
   const runCheck = useCallback(async () => {
-    if (running.current) {
+    if (disposed.current) return;
+    if (running.current || rebuilding.current) {
       again.current = true;
       return;
     }
+    if (idle.current) clearTimeout(idle.current);
     const p = projectRef.current;
     if (p.status !== 'ready' || !p.requirements.length) return;
     const draft = p.draft;
     setWordsSince(0);
     if (countWords(draft) < 3) {
-      update((x) => ({ ...x, results: {}, checkedDraft: draft, lastCheckAt: undefined }));
+      updateSelf((x) => ({ ...x, results: {}, checkedDraft: draft, lastCheckAt: undefined }));
       return;
     }
+    const myGen = gen.current;
+    const current = () => !disposed.current && gen.current === myGen;
     running.current = true;
     again.current = false;
     const ac = new AbortController();
     abort.current = ac;
     setCheck({ running: true, done: 0, total: p.requirements.length, error: null });
-    const fresh: Record<string, RequirementResult> = {};
+    let received = 0;
+    let sawDone = false;
     let error: CheckState['error'] = null;
     try {
       await streamEvaluate(
         { draft, docs: p.documents.map((d) => ({ id: d.id, name: d.name })), requirements: p.requirements },
         (e) => {
+          if (!current()) return;
           if (e.type === 'result') {
-            fresh[e.result.reqId] = e.result;
-            update((x) => ({ ...x, results: { ...x.results, [e.result.reqId]: e.result } }));
+            received++;
+            updateSelf((x) => ({ ...x, results: { ...x.results, [e.result.reqId]: e.result } }));
             setCheck((c) => ({ ...c, done: c.done + 1 }));
           } else if (e.type === 'done') {
+            sawDone = true;
             error = e.error ?? null;
           }
         },
         ac.signal,
       );
-      if (!error || Object.values(fresh).some((r) => !r.error)) {
-        update((x) => ({ ...x, checkedDraft: draft, lastCheckAt: Date.now() }), true);
+      if (!sawDone || received < p.requirements.length) {
+        error ??= { code: 'incomplete', message: 'The check was cut off before every requirement was answered. Use "Check now" to try again.' };
+      }
+      // Only a complete check counts as current; otherwise the panel keeps saying the draft changed.
+      if (current() && sawDone && received === p.requirements.length) {
+        updateSelf((x) => ({ ...x, checkedDraft: draft, lastCheckAt: Date.now() }), true);
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
@@ -97,40 +121,54 @@ export default function Workspace({
     } finally {
       running.current = false;
       abort.current = null;
-      setCheck((c) => ({ ...c, running: false, error }));
-      if (again.current) {
+      if (!disposed.current) setCheck((c) => ({ ...c, running: false, error: current() ? error : null }));
+      if (!disposed.current && again.current) {
         again.current = false;
         void runCheck();
       }
     }
-  }, [update]);
+  }, [updateSelf]);
 
   // First open: check once if the draft changed since the last completed check.
   useEffect(() => {
+    disposed.current = false;
     const p = projectRef.current;
     if (p.status === 'ready' && p.draft.trim() && p.draft !== p.checkedDraft) void runCheck();
-    return () => abort.current?.abort();
+    return () => {
+      disposed.current = true;
+      again.current = false;
+      if (idle.current) clearTimeout(idle.current);
+      abort.current?.abort();
+    };
   }, [runCheck]);
 
   const onDraftInput = (value: string, inputType?: string) => {
     const n = countWords(value);
     const delta = Math.abs(n - lastWords.current);
     lastWords.current = n;
-    update((x) => ({ ...x, draft: value }));
+    updateSelf((x) => ({ ...x, draft: value }));
     const pasted = inputType === 'insertFromPaste' || inputType === 'insertFromDrop';
     const since = wordsSince + delta;
+    if (idle.current) clearTimeout(idle.current);
     if (pasted || since >= WORDS_PER_CHECK) {
       // Let React commit the new draft first so the check sends the current text.
       setWordsSince(0);
       setTimeout(() => void runCheck(), 0);
     } else {
       setWordsSince(since);
+      // Small edits that keep the word count (e.g. fixing "12" to "24") are checked after a pause.
+      idle.current = setTimeout(() => {
+        const p = projectRef.current;
+        if (p.draft !== p.checkedDraft) void runCheck();
+      }, IDLE_CHECK_MS);
     }
   };
 
   const doRebuild = async (newFiles?: File[]) => {
     setRebuild({ steps: initialSteps(), error: null });
-    setRolesChanged(false);
+    rebuilding.current = true;
+    gen.current++;
+    again.current = false;
     abort.current?.abort();
     const steps = initialSteps();
     const set = (key: Step['key'], patch: Partial<Step>) => {
@@ -140,10 +178,12 @@ export default function Workspace({
     };
     try {
       let documents = projectRef.current.documents;
+      let unread: Project['dropped'] = [];
       if (newFiles?.length) {
         set('read', { state: 'running', detail: `0 of ${newFiles.length}` });
         const maxId = Math.max(0, ...documents.map((d) => Number(d.id.slice(1)) || 0));
         const { docs, failed } = await readFiles(newFiles, (n) => set('read', { detail: `${n} of ${newFiles.length}` }), maxId + 1);
+        unread = failed.map((f) => ({ title: f, reason: 'File could not be read.' }));
         set('read', { state: 'done', detail: `${docs.length} new file${docs.length === 1 ? '' : 's'}${failed.length ? `, ${failed.length} skipped` : ''}` });
         set('sort', { state: 'running' });
         await classify(projectRef.current.description, docs);
@@ -154,10 +194,17 @@ export default function Workspace({
         set('sort', { state: 'done', detail: 'Using the roles you set' });
       }
       const map = await buildRequirements({ ...projectRef.current, documents }, set);
-      update((x) => ({ ...x, documents, ...map, results: {}, checkedDraft: undefined, lastCheckAt: undefined, status: 'ready' }), true);
+      const earlierUnread = projectRef.current.dropped.filter((d) => d.reason === 'File could not be read.');
+      updateSelf(
+        (x) => ({ ...x, documents, ...map, dropped: [...earlierUnread, ...unread, ...map.dropped], results: {}, checkedDraft: undefined, lastCheckAt: undefined, status: 'ready' }),
+        true,
+      );
+      setRolesChanged(false);
       setRebuild(null);
+      rebuilding.current = false;
       setTimeout(() => void runCheck(), 50);
     } catch (err) {
+      rebuilding.current = false;
       setRebuild({ steps: steps.map((s) => ({ ...s })), error: (err as Error).message });
     }
   };
@@ -191,7 +238,7 @@ export default function Workspace({
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[280px_minmax(0,1fr)_minmax(400px,500px)] lg:rounded-[22px] lg:border lg:border-line">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] overflow-hidden lg:grid-cols-[280px_minmax(0,1fr)_minmax(400px,500px)] lg:rounded-[22px] lg:border lg:border-line">
         <Sidebar
           project={project}
           projects={projects}
@@ -223,7 +270,7 @@ export default function Workspace({
             onChange={(e) => onDraftInput(e.target.value, (e.nativeEvent as InputEvent).inputType)}
             aria-label="Submission draft text"
           />
-          <CheckFooter check={check} wordsSince={wordsSince} hasDraft={words > 2} onCheck={() => void runCheck()} lastCheckAt={project.lastCheckAt} />
+          <CheckFooter check={check} wordsSince={wordsSince} hasDraft={words > 2} onCheck={() => void runCheck()} lastCheckAt={project.lastCheckAt} changed={project.draft !== project.checkedDraft} />
         </section>
 
         <div className={`min-h-0 lg:block ${mobileTab === 'compliance' ? 'block' : 'hidden'}`}>
@@ -237,7 +284,7 @@ export default function Workspace({
           quote={doc.quote}
           onClose={() => setDoc(null)}
           onRoleChange={(role) => {
-            update((x) => ({ ...x, documents: x.documents.map((d) => (d.id === doc.doc.id ? { ...d, role } : d)) }), true);
+            updateSelf((x) => ({ ...x, documents: x.documents.map((d) => (d.id === doc.doc.id ? { ...d, role } : d)) }), true);
             setDoc((cur) => (cur ? { ...cur, doc: { ...cur.doc, role } } : cur));
             setRolesChanged(true);
           }}
@@ -255,12 +302,14 @@ function CheckFooter({
   hasDraft,
   onCheck,
   lastCheckAt,
+  changed,
 }: {
   check: CheckState;
   wordsSince: number;
   hasDraft: boolean;
   onCheck: () => void;
   lastCheckAt?: number;
+  changed: boolean;
 }) {
   const left = Math.max(0, WORDS_PER_CHECK - wordsSince);
   return (
@@ -276,7 +325,7 @@ function CheckFooter({
           </>
         ) : lastCheckAt ? (
           <>
-            <IconCheck size={14} className="text-ok-text" /> {wordsSince ? `Next check in ${left} words or on paste` : 'Checked'}
+            <IconCheck size={14} className="text-ok-text" /> {changed ? `Next check in ${left} words, on paste or after a pause` : 'Checked'}
           </>
         ) : (
           <>Checks every {WORDS_PER_CHECK} words and on paste</>

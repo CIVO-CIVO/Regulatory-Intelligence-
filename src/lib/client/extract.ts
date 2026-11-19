@@ -32,10 +32,30 @@ export async function extractFile(file: File, id: string): Promise<KbDocument> {
     const text = await fromXlsx(await file.arrayBuffer());
     return { ...base, text, quality: { chars: text.length, lowTextPages: [] } };
   }
-  let text = await file.text();
-  if (/\.html?$/i.test(file.name)) text = new DOMParser().parseFromString(text, 'text/html').body.innerText;
+  let text = decodeText(await file.arrayBuffer());
+  if (/\.html?$/i.test(file.name)) text = htmlToText(text);
   text = tidy(text);
   return { ...base, text, quality: { chars: text.length, lowTextPages: [] } };
+}
+
+/** UTF-8 first; files saved by older Windows tools are often Windows-1252 (µ, ±, °, ≤ would be lost). */
+function decodeText(buf: ArrayBuffer): string {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(buf).replace(/^\ufeff/, '');
+  } catch {
+    return new TextDecoder('windows-1252').decode(buf);
+  }
+}
+
+function htmlToText(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('script, style, noscript, template, svg').forEach((n) => n.remove());
+  doc.querySelectorAll('br').forEach((n) => n.replaceWith('\n'));
+  doc.querySelectorAll('p, div, li, tr, h1, h2, h3, h4, h5, h6, section, article, table, blockquote, pre').forEach((n) => {
+    n.append('\n');
+  });
+  doc.querySelectorAll('td, th').forEach((n) => n.append(' | '));
+  return doc.body?.textContent ?? '';
 }
 
 function tidy(s: string): string {
@@ -67,7 +87,8 @@ async function fromPdf(file: File): Promise<Pick<KbDocument, 'text' | 'quality'>
       lastY = y;
     }
     text = tidy(text);
-    if (text.replace(/\s/g, '').length < LOW_TEXT_PAGE) low.push(p);
+    // A short final page (end of a section) is normal; only flag it if the whole file lacks text.
+    if (text.replace(/\s/g, '').length < LOW_TEXT_PAGE && (p < doc.numPages || low.length === p - 1)) low.push(p);
     parts.push(`[Page ${p}]\n${text}`);
     page.cleanup();
   }
@@ -87,28 +108,42 @@ async function fromXlsx(buf: ArrayBuffer): Promise<string> {
   const files = unzipSync(new Uint8Array(buf));
   const parse = (name: string) => (files[name] ? new DOMParser().parseFromString(strFromU8(files[name]), 'application/xml') : null);
   const shared: string[] = [];
-  const ss = parse('xl/sharedStrings.xml');
-  ss?.querySelectorAll('si').forEach((si) => shared.push(Array.from(si.querySelectorAll('t')).map((t) => t.textContent ?? '').join('')));
-  const wb = parse('xl/workbook.xml');
-  const names = wb ? Array.from(wb.querySelectorAll('sheet')).map((s) => s.getAttribute('name') ?? 'Sheet') : [];
-  const sheetFiles = Object.keys(files)
-    .filter((f) => /^xl\/worksheets\/sheet\d+\.xml$/.test(f))
-    .sort((a, b) => Number(a.match(/\d+/)![0]) - Number(b.match(/\d+/)![0]));
+  parse('xl/sharedStrings.xml')
+    ?.querySelectorAll('si')
+    .forEach((si) => shared.push(Array.from(si.querySelectorAll('t')).map((t) => t.textContent ?? '').join('')));
+  // Sheet names map to sheet files through the workbook relationships, not by position.
+  const rels = new Map<string, string>();
+  parse('xl/_rels/workbook.xml.rels')
+    ?.querySelectorAll('Relationship')
+    .forEach((r) => rels.set(r.getAttribute('Id') ?? '', (r.getAttribute('Target') ?? '').replace(/^\/?(xl\/)?/, 'xl/')));
+  const sheets = Array.from(parse('xl/workbook.xml')?.querySelectorAll('sheet') ?? []).map((sh, i) => ({
+    name: sh.getAttribute('name') ?? `Sheet ${i + 1}`,
+    file: rels.get(sh.getAttribute('r:id') ?? sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id') ?? '') ?? `xl/worksheets/sheet${i + 1}.xml`,
+  }));
+  const colIndex = (ref: string | null, fallback: number) => {
+    const letters = ref?.match(/^[A-Z]+/)?.[0];
+    if (!letters) return fallback;
+    let n = 0;
+    for (const ch of letters) n = n * 26 + (ch.charCodeAt(0) - 64);
+    return n - 1;
+  };
   const out: string[] = [];
-  sheetFiles.forEach((f, i) => {
-    const doc = parse(f)!;
+  for (const sheet of sheets) {
+    const doc = parse(sheet.file);
+    if (!doc) continue;
     const rows: string[] = [];
     doc.querySelectorAll('sheetData row').forEach((row) => {
-      const cells = Array.from(row.querySelectorAll('c')).map((c) => {
+      const cells: string[] = [];
+      Array.from(row.querySelectorAll('c')).forEach((c, i) => {
         const t = c.getAttribute('t');
         const v = c.querySelector('v')?.textContent ?? '';
-        if (t === 's') return shared[Number(v)] ?? '';
-        if (t === 'inlineStr') return c.querySelector('is t')?.textContent ?? '';
-        return v;
+        const value = t === 's' ? (shared[Number(v)] ?? '') : t === 'inlineStr' ? (c.querySelector('is t')?.textContent ?? '') : v;
+        cells[colIndex(c.getAttribute('r'), i)] = value; // blank cells keep their column
       });
-      if (cells.some((x) => x.trim())) rows.push(cells.join(' | '));
+      const line = Array.from(cells, (x) => x ?? '').join(' | ');
+      if (line.replace(/[|\s]/g, '')) rows.push(line);
     });
-    out.push(`[Sheet: ${names[i] ?? `Sheet ${i + 1}`}]\n${rows.join('\n')}`);
-  });
+    out.push(`[Sheet: ${sheet.name}]\n${rows.join('\n')}`);
+  }
   return tidy(out.join('\n\n'));
 }

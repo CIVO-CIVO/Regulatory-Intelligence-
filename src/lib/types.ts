@@ -100,6 +100,8 @@ export interface RequirementResult {
   error?: string;
   /** Draft sections that were in the state. */
   sections?: string[];
+  /** Jev saw only part of a long draft. */
+  partial?: boolean;
 }
 
 export interface DroppedRequirement {

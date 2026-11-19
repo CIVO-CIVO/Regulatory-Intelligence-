@@ -14,6 +14,7 @@ interface Body {
 }
 
 const CONCURRENCY = 12;
+const TIME_BUDGET_MS = 95_000; // maxDuration is 120 s
 
 /**
  * Re-check the draft: every requirement's Jev questions are asked against the current text.
@@ -54,6 +55,7 @@ export async function POST(req: Request) {
           model: [...models][0],
           error: errors.get(r.id),
           sections: job.sections,
+          partial: job.partial,
         });
         // A requirement with a failed call is shown as not checked, never with a partial score.
         if (result.error) result.tone = 'grey';
@@ -63,6 +65,12 @@ export async function POST(req: Request) {
         while (next < jobs.length) {
           const job = jobs[next++];
           const r = body.requirements.find((x) => x.id === job.reqId)!;
+          if (Date.now() - t0 > TIME_BUDGET_MS) {
+            // Never run into the function limit mid-stream: unanswered items come back as "not checked".
+            errors.set(r.id, 'Time limit reached before this requirement was checked.');
+            finish(r, job);
+            continue;
+          }
           try {
             const out = await jevDecide(job.state, job.questions, req.signal);
             models.add(out.model);

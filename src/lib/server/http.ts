@@ -45,7 +45,11 @@ export function errorResponse(err: unknown): Response {
 /** Browsers send Origin on POST; refuse other sites calling these endpoints on our AI credits. */
 export function assertSameOrigin(req: Request): void {
   const origin = req.headers.get('origin');
-  if (!origin) return;
+  // Browsers always send Origin (or Sec-Fetch-Site) on POST; a request with neither is not from this app.
+  if (!origin) {
+    if (req.headers.get('sec-fetch-site') === 'same-origin') return;
+    throw new HttpError(403, 'Requests must come from the app.');
+  }
   const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
   try {
     if (new URL(origin).host !== host) throw new HttpError(403, 'Cross-site requests are not allowed.');

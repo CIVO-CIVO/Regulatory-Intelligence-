@@ -101,3 +101,22 @@ test('linter flags unresolved references and vague qualifiers', () => {
   assert.ok(lintElement('an adequate description of the device').length > 0);
   assert.equal(lintElement('the trade name of the device').length, 0);
 });
+
+test('long draft with single line breaks: text near the end still reaches Jev', () => {
+  const para = (i: number) => `Paragraph ${i} describes general background about the wound dressing programme and its history in some detail.`;
+  const lines = Array.from({ length: 180 }, (_, i) => para(i));
+  lines.push('The shelf life of the FlexiGuard dressing is 3 years when stored between 5 and 30 degrees.');
+  const draft = `Submission\n${lines.join('\n')}`;
+  assert.ok(draft.length > 19000);
+  const sections = splitSections(draft);
+  assert.ok(sections.length > 5, 'oversized block is split into parts');
+  const picked = selectSections(sections, 'shelf life storage conditions expiry');
+  assert.ok(picked.some((s) => s.text.includes('shelf life of the FlexiGuard')), 'shelf-life text is sent');
+});
+
+test('score is rounded down so the number agrees with the colour', () => {
+  const a = toQuestionResult(req.questions[0], { type: 'boolean', probability: 0.796 });
+  const r = scoreRequirement({ ...req, questions: [req.questions[0]] }, [a]);
+  assert.equal(r.score, 79);
+  assert.equal(r.tone, 'amber');
+});

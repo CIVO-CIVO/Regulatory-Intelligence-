@@ -72,7 +72,9 @@ export async function buildRequirements(
   update: (key: Step['key'], patch: Partial<Step>) => void,
 ): Promise<Pick<Project, 'categories' | 'requirements' | 'dropped'>> {
   const sources = project.documents.filter((d) => d.role && SOURCE_ROLES.includes(d.role));
-  const evidence = project.documents.filter((d) => d.role === 'evidence' || d.role === 'draft');
+  // Only the applicant's evidence backs claims. An earlier draft is not evidence: comparing the
+  // draft with itself would make persuasive wording look "supported".
+  const evidence = project.documents.filter((d) => d.role === 'evidence');
   if (!sources.length) {
     throw new Error(
       'None of the files looks like a regulation, guidance or standard, so there are no rules to check against. Open the knowledge base, set the role of your rule documents, and rebuild.',
@@ -92,15 +94,20 @@ export async function buildRequirements(
   if (!map.requirements.length) throw new Error('No requirements about the document content were found in the rule documents.');
   update('rules', { state: 'done', detail: `${map.requirements.length} requirements in ${map.categories.length} categories` });
 
-  update('questions', { state: 'running', detail: `0 of ${map.categories.length} categories` });
+  // Batches of at most 5 requirements (large categories are split): smaller, faster, sturdier calls.
+  const batches: { category: string; reqs: Requirement[] }[] = [];
+  for (const category of map.categories) {
+    const all = map.requirements.filter((r) => r.category === category);
+    for (let i = 0; i < all.length; i += 5) batches.push({ category, reqs: all.slice(i, i + 5) });
+  }
+  update('questions', { state: 'running', detail: `0 of ${batches.length} batches` });
   let done = 0;
   const fallbacks: string[] = [];
-  const queue = [...map.categories];
+  const queue = [...batches];
   const evidencePayload = evidence.map((d) => ({ id: d.id, name: d.name, text: d.text }));
   const worker = async () => {
     while (queue.length) {
-      const category = queue.shift()!;
-      const reqs = map.requirements.filter((r) => r.category === category);
+      const { category, reqs } = queue.shift()!;
       const payload = {
         description: project.description,
         category,
@@ -117,7 +124,7 @@ export async function buildRequirements(
           res = await postJson<Res>('/api/analyze/questions', payload, { gzip: true });
         } catch {
           // Keep the build going: these requirements get one plain coverage question each.
-          fallbacks.push(category);
+          if (!fallbacks.includes(category)) fallbacks.push(category);
           res = {
             requirements: reqs.map((r) => ({
               id: r.id,
@@ -132,10 +139,10 @@ export async function buildRequirements(
         if (q) Object.assign(r, { questions: q.questions, evidence: q.evidence, hint: q.hint });
       }
       done++;
-      update('questions', { detail: `${done} of ${map.categories.length} categories` });
+      update('questions', { detail: `${done} of ${batches.length} batches` });
     }
   };
-  await Promise.all(Array.from({ length: Math.min(4, map.categories.length) }, worker));
+  await Promise.all(Array.from({ length: Math.min(5, batches.length) }, worker));
   const nq = map.requirements.reduce((n, r) => n + r.questions.length, 0);
   update('questions', { state: 'done', detail: `${nq} questions${fallbacks.length ? ` (simple questions used for ${fallbacks.join(', ')})` : ''}` });
   if (fallbacks.length) {

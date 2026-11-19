@@ -189,7 +189,31 @@ export function splitSections(draft: string): DraftSection[] {
   if (pendingHeading) {
     sections.push({ heading: pendingHeading.text, text: '', start: pendingHeading.start, end: draft.length });
   }
-  return sections;
+  return sections.flatMap(splitLarge);
+}
+
+const PART_CHARS = 2500;
+
+/**
+ * Text pasted from Word often has single line breaks only, which makes one huge "section".
+ * Split oversized sections into parts on line breaks (or sentences) so ranking can pick the
+ * relevant parts instead of sending only the beginning of the draft.
+ */
+function splitLarge(s: DraftSection): DraftSection[] {
+  if (s.text.length <= PART_CHARS * 1.5) return [s];
+  const units = s.text.split(/\n+/).flatMap((line) => (line.length > PART_CHARS ? line.match(/[^.!?]+[.!?]+\s*|[^.!?]+$/g) ?? [line] : [line]));
+  const parts: string[] = [];
+  let buf = '';
+  for (const u of units) {
+    if (buf && buf.length + u.length > PART_CHARS) {
+      parts.push(buf.trim());
+      buf = '';
+    }
+    buf += (buf ? '\n' : '') + u;
+  }
+  if (buf.trim()) parts.push(buf.trim());
+  const base = s.heading || 'Untitled section';
+  return parts.map((text, i) => ({ heading: `${base} (part ${i + 1} of ${parts.length})`, text, start: s.start, end: s.end }));
 }
 
 const STOP = new Set(
@@ -206,7 +230,7 @@ export function keywords(s: string): string[] {
  * Pick the draft sections Jev should see. Short drafts go in whole; long drafts are ranked by
  * keyword overlap with the requirement and cut to the budget, keeping the original order.
  */
-export function selectSections(sections: DraftSection[], query: string, budgetChars = 14000): DraftSection[] {
+export function selectSections(sections: DraftSection[], query: string, budgetChars = 20000): DraftSection[] {
   const total = sections.reduce((n, s) => n + s.heading.length + s.text.length, 0);
   if (total <= budgetChars) return sections;
   const q = new Set(keywords(query));
@@ -223,8 +247,10 @@ export function selectSections(sections: DraftSection[], query: string, budgetCh
   for (const c of scored) {
     const len = c.s.heading.length + c.s.text.length;
     if (used + len > budgetChars) {
-      if (picked.length === 0) {
-        picked.push({ ...c, s: { ...c.s, text: c.s.text.slice(0, budgetChars) } });
+      // Shorten a relevant section to the space left instead of skipping it.
+      const room = budgetChars - used - c.s.heading.length;
+      if (c.score > 0 && room > 400) {
+        picked.push({ ...c, s: { ...c.s, text: `${c.s.text.slice(0, room)} [cut]` } });
         used = budgetChars;
       }
       continue;

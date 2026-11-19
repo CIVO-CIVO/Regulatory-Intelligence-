@@ -53,9 +53,10 @@ export default function App() {
 
   /** Update the open project; persisted to IndexedDB shortly after. */
   const update = useCallback(
-    (fn: (p: Project) => Project, immediate = false) => {
+    (fn: (p: Project) => Project, immediate = false, projectId?: string) => {
+      if (projectId && latest.current?.id !== projectId) return; // late update for a project no longer open
       setCurrent((prev) => {
-        if (!prev) return prev;
+        if (!prev || (projectId && prev.id !== projectId)) return prev;
         const next = { ...fn(prev), updatedAt: Date.now() };
         latest.current = next;
         return next;
@@ -109,6 +110,9 @@ export default function App() {
         setUrl(null);
       }}
       onDelete={async (id) => {
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+        if (latest.current?.id === id) latest.current = null;
         await deleteProject(id);
         await refreshList();
         if (current.id === id) {

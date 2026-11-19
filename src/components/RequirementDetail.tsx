@@ -118,6 +118,9 @@ export default function RequirementDetail({
       {live?.sections && (
         <Block title="Draft sections Jev read">
           <p className="text-[13px] leading-relaxed text-muted">{live.sections.join(', ') || 'None'}</p>
+          {live.partial && (
+            <p className="mt-1.5 text-[12px] text-warn-text">The draft is long, so Jev read only the sections that best match this requirement.</p>
+          )}
         </Block>
       )}
 
@@ -152,7 +155,7 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
 function QuoteCard({ quote, source, onOpen }: { quote: Quote; source: string; onOpen: () => void }) {
   return (
     <button type="button" onClick={onOpen} className="w-full rounded-xl border border-line bg-panel-2 px-4 py-3 text-left hover:border-line-strong">
-      <span className="block whitespace-pre-line text-[14px] leading-relaxed text-ink-2">&ldquo;{quote.text.trim()}&rdquo;</span>
+      <span className="block text-[14px] leading-relaxed text-ink-2">&ldquo;{quote.text.replace(/\[Page \d+\]/g, ' ').replace(/\s+/g, ' ').trim()}&rdquo;</span>
       <span className="mt-2 block text-[12px] text-muted">
         {source}
         {quote.page ? `, page ${quote.page}` : ''}
