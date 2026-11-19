@@ -56,3 +56,9 @@ export const Spinner = ({ className, size = 16 }: P) => (
 export const IconSliders = ({ className, size }: P) => (
   <svg {...base(size)} className={className}><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" /></svg>
 );
+export const IconLink = ({ className, size }: P) => (
+  <svg {...base(size)} className={className}><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg>
+);
+export const IconText = ({ className, size }: P) => (
+  <svg {...base(size)} className={className}><path d="M5 6h14M5 10h14M5 14h10M5 18h7" /></svg>
+);

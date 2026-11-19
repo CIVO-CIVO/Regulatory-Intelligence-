@@ -11,7 +11,19 @@ It is a writing aid, not a compliance decision. Product spec: `Regulatory-Intell
 The owner's goal: when you write a paragraph, show how it stands against the rules it is about, and keep
 everything else neutral. Each page under "Our draft" has its own ratings.
 
-1. **Read** (browser): PDF, DOCX, XLSX, CSV and text become text in the browser. Scanned pages are flagged.
+1. **Read** (browser): files (PDF, DOCX, XLSX, CSV, text), **web links** and **pasted text**, on the front page,
+   in the knowledge base (Files / Link / Paste text) and as draft pages (Page / Files / Link). Scanned pages are
+   flagged.
+   - Links go through `/api/fetch-url`, a safe download proxy: http(s) only, public addresses only (DNS checked,
+     every redirect re-checked), 30 MB and 25 s caps. The browser then reads the result like an upload.
+   - Web pages keep their main content only (menus, headers and footers removed), headings as `#` lines,
+     lists as `-`, table rows as `a | b`, saved as a `.md` document with its source link.
+   - eCFR links (`ecfr.gov/current/title-21/.../part-812`, also subpart and section links) are fetched from the
+     eCFR renderer, which gives the regulation without the site around it.
+   - A short landing page that links its main document (FDA guidance pages: "Download the guidance") brings in
+     that PDF instead.
+   - Sites with a bot check or JavaScript-only pages (EUR-Lex, for example) give almost no text; the user is
+     told to upload the file or paste the text.
 2. **Sort** (LLM): each file is a rule document (regulation, guidance, standard), **project facts** (what is
    true about the project: dossier, study reports, approvals) or other.
 3. **Rules** (LLM, one call per rule document; long documents are split into ~60k-character parts, in parallel):

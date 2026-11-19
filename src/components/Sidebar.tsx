@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { ROLE_LABEL, SOURCE_ROLES, type DraftPage, type KbDocument, type Project, type ProjectSummary } from '@/lib/types';
 import { ACCEPT } from '@/lib/client/extract';
-import { IconAlert, IconBooks, IconDoc, IconFile, IconFolder, IconPen, IconPlus, IconRefresh, IconSliders, IconX, Spinner } from './Icons';
+import { IconAlert, IconBooks, IconDoc, IconFile, IconFolder, IconLink, IconPen, IconPlus, IconRefresh, IconSliders, IconX, Spinner } from './Icons';
 import { pageIsStale } from '@/lib/pages';
 
 export default function Sidebar({
@@ -25,6 +25,7 @@ export default function Sidebar({
   onAddPageFiles,
   importing,
   checkingPageId,
+  onOpenAdd,
   view,
   onView,
 }: {
@@ -46,6 +47,7 @@ export default function Sidebar({
   onAddPageFiles: (files: File[]) => void;
   importing: string | null;
   checkingPageId?: string;
+  onOpenAdd: (mode: 'link' | 'text', target: 'knowledge base' | 'draft') => void;
   view: 'draft' | 'focus';
   onView: (v: 'draft' | 'focus') => void;
 }) {
@@ -97,7 +99,7 @@ export default function Sidebar({
                           title={`${d.name} (${d.role ? ROLE_LABEL[d.role] : 'unsorted'})`}
                           className="group flex w-full items-center gap-2 rounded-md py-1 pr-1 text-left text-ink-2 hover:text-ink"
                         >
-                          <IconFile size={15} className="shrink-0 text-muted" />
+                          {d.sourceUrl ? <IconLink size={15} className="shrink-0 text-muted" /> : <IconFile size={15} className="shrink-0 text-muted" />}
                           <span className="min-w-0 flex-1 truncate">{d.name}</span>
                           {unreadable && <IconAlert size={13} className="shrink-0 text-warn-text" />}
                         </button>
@@ -108,9 +110,15 @@ export default function Sidebar({
               </li>
             ) : null,
           )}
-          <li>
-            <button type="button" onClick={() => fileInput.current?.click()} className="flex items-center gap-2 py-1.5 text-[13px] text-muted hover:text-ink">
-              <IconPlus size={14} /> Add files
+          <li className="mt-1 flex flex-wrap gap-x-3">
+            <button type="button" onClick={() => fileInput.current?.click()} className="flex items-center gap-1.5 py-1.5 text-[13px] text-muted hover:text-ink">
+              <IconPlus size={14} /> Files
+            </button>
+            <button type="button" onClick={() => onOpenAdd('link', 'knowledge base')} className="flex items-center gap-1.5 py-1.5 text-[13px] text-muted hover:text-ink">
+              <IconPlus size={14} /> Link
+            </button>
+            <button type="button" onClick={() => onOpenAdd('text', 'knowledge base')} className="flex items-center gap-1.5 py-1.5 text-[13px] text-muted hover:text-ink">
+              <IconPlus size={14} /> Paste text
             </button>
             <input
               ref={fileInput}
@@ -154,12 +162,15 @@ export default function Sidebar({
               </li>
             );
           })}
-          <li className="flex flex-wrap gap-x-4">
-            <button type="button" onClick={onAddPage} className="flex items-center gap-2 py-1.5 text-[13px] text-muted hover:text-ink">
-              <IconPlus size={14} /> Add page
+          <li className="flex flex-wrap gap-x-3">
+            <button type="button" onClick={onAddPage} className="flex items-center gap-1.5 py-1.5 text-[13px] text-muted hover:text-ink">
+              <IconPlus size={14} /> Page
             </button>
-            <button type="button" onClick={() => pageFileInput.current?.click()} className="flex items-center gap-2 py-1.5 text-[13px] text-muted hover:text-ink">
-              <IconPlus size={14} /> Add files
+            <button type="button" onClick={() => pageFileInput.current?.click()} className="flex items-center gap-1.5 py-1.5 text-[13px] text-muted hover:text-ink">
+              <IconPlus size={14} /> Files
+            </button>
+            <button type="button" onClick={() => onOpenAdd('link', 'draft')} className="flex items-center gap-1.5 py-1.5 text-[13px] text-muted hover:text-ink">
+              <IconPlus size={14} /> Link
             </button>
             <input
               ref={pageFileInput}

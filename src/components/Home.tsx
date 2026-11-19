@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Project, ProjectSummary } from '@/lib/types';
 import { ACCEPT, kindOf } from '@/lib/client/extract';
+import { sourceLabel, type SourceInput } from '@/lib/client/sources';
+import AddSourceDialog, { type AddMode } from './AddSourceDialog';
 import { createProject, initialSteps, type Step } from '@/lib/client/build';
-import { IconAlert, IconArrowRight, IconCheck, IconDots, IconFile, IconFolder, IconFolderUp, IconX, Spinner } from './Icons';
+import { IconAlert, IconArrowRight, IconCheck, IconDots, IconFile, IconFolder, IconFolderUp, IconLink, IconText, IconX, Spinner } from './Icons';
 
 const EXAMPLE = {
   name: 'FlexiGuard 510(k)',
@@ -32,7 +34,8 @@ export default function Home({
 }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [files, setFiles] = useState<File[]>([]);
+  const [sources, setSources] = useState<SourceInput[]>([]);
+  const [adding, setAdding] = useState<AddMode | null>(null);
   const [drag, setDrag] = useState(false);
   const [menu, setMenu] = useState(false);
   const [steps, setSteps] = useState<Step[] | null>(null);
@@ -63,7 +66,10 @@ export default function Home({
     const incoming = Array.from(list);
     const bad = incoming.filter((f) => !kindOf(f.name));
     const good = incoming.filter((f) => kindOf(f.name));
-    setFiles((prev) => [...prev, ...good.filter((f) => !prev.some((p) => p.name === f.name && p.size === f.size))]);
+    setSources((prev) => [
+      ...prev,
+      ...good.filter((f) => !prev.some((p) => p.type === 'file' && p.file.name === f.name && p.file.size === f.size)).map((file) => ({ type: 'file' as const, file })),
+    ]);
     setNotice(bad.length ? `Skipped ${bad.map((f) => f.name).join(', ')}: use PDF, DOCX, XLSX, CSV or text files.` : null);
   };
 
@@ -84,7 +90,7 @@ export default function Home({
       const draft = await fetch('/examples/draft.txt').then((r) => (r.ok ? r.text() : ''));
       setName(EXAMPLE.name);
       setDescription(EXAMPLE.description);
-      setFiles(loaded);
+      setSources(loaded.map((file) => ({ type: 'file' as const, file })));
       setExampleDraft(draft);
       setNotice('Example files loaded. The clinical, risk and labeling files are fictional; the CFR and FDA texts are real public documents.');
     } catch {
@@ -93,11 +99,11 @@ export default function Home({
   };
 
   const create = async () => {
-    if (!files.length) return;
+    if (!sources.length) return;
     setError(null);
     setSteps(initialSteps());
     try {
-      const project = await createProject({ name: name || 'Untitled project', description, files }, setSteps);
+      const project = await createProject({ name: name || 'Untitled project', description, sources }, setSteps);
       if (exampleDraft && name === EXAMPLE.name) project.pages = [{ ...project.pages[0], text: exampleDraft }];
       onCreated(project);
     } catch (err) {
@@ -105,7 +111,7 @@ export default function Home({
     }
   };
 
-  const canCreate = files.length > 0 && name.trim().length > 0;
+  const canCreate = sources.length > 0 && name.trim().length > 0;
   const building = steps !== null;
 
   return (
@@ -189,22 +195,36 @@ export default function Home({
                   <span className="text-[15px] text-ink-2">Drop regulations, guidance and evidence</span>
                   <span className="text-[12px] text-faint">PDF, Word, Excel, CSV or text</span>
                 </button>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={() => setAdding('link')} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13.5px] text-ink-2 hover:bg-panel-2 hover:text-ink">
+                    <IconLink size={15} /> Add a link
+                  </button>
+                  <button type="button" onClick={() => setAdding('text')} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13.5px] text-ink-2 hover:bg-panel-2 hover:text-ink">
+                    <IconText size={15} /> Paste text
+                  </button>
+                </div>
                 <input ref={input} type="file" multiple accept={ACCEPT} className="hidden" onChange={(e) => e.target.files && addFiles(e.target.files)} />
-                <ul className="mt-2 flex flex-col items-start gap-2">
-                  {files.map((f, i) => (
-                    <li key={`${f.name}-${i}`} className="flex max-w-full items-center gap-2 rounded-full bg-panel-2 py-2 pl-3.5 pr-2.5 text-[14px] text-ink-2">
-                      <IconFile size={16} className="shrink-0 text-muted" />
-                      <span className="max-w-[260px] truncate">{f.name}</span>
-                      <button
-                        type="button"
-                        aria-label={`Remove ${f.name}`}
-                        onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
-                        className="grid size-6 place-items-center rounded-full text-muted hover:bg-raise hover:text-ink"
-                      >
-                        <IconX size={14} />
-                      </button>
-                    </li>
-                  ))}
+                <ul className="mt-1 flex flex-col items-start gap-2">
+                  {sources.map((src, i) => {
+                    const fromLink = src.type === 'link' || (src.type === 'doc' && !!src.doc.sourceUrl);
+                    const fromText = src.type === 'text' || (src.type === 'doc' && !src.doc.sourceUrl && src.doc.kind === 'text');
+                    const Icon = fromLink ? IconLink : fromText ? IconText : IconFile;
+                    const label = sourceLabel(src);
+                    return (
+                      <li key={`${label}-${i}`} className="flex max-w-full items-center gap-2 rounded-full bg-panel-2 py-2 pl-3.5 pr-2.5 text-[14px] text-ink-2" title={src.type === 'doc' && src.doc.sourceUrl ? src.doc.sourceUrl : label}>
+                        <Icon size={16} className="shrink-0 text-muted" />
+                        <span className="max-w-[260px] truncate">{label}</span>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${label}`}
+                          onClick={() => setSources((prev) => prev.filter((_, j) => j !== i))}
+                          className="grid size-6 place-items-center rounded-full text-muted hover:bg-raise hover:text-ink"
+                        >
+                          <IconX size={14} />
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </div>
@@ -234,6 +254,15 @@ export default function Home({
         </section>
 
         <ConnectionNote status={status} />
+
+        {adding && (
+          <AddSourceDialog
+            mode={adding}
+            target="knowledge base"
+            onClose={() => setAdding(null)}
+            onAdd={(doc) => setSources((prev) => [...prev, { type: 'doc', doc }])}
+          />
+        )}
 
         {projects.length > 0 && !building && (
           <section className="mt-8">

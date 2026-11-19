@@ -14,6 +14,7 @@ import Sidebar from './Sidebar';
 import CompliancePanel from './CompliancePanel';
 import DocViewer from './DocViewer';
 import FocusSettings from './FocusSettings';
+import AddSourceDialog from './AddSourceDialog';
 import { IconAlert, IconCheck, IconMenu, Spinner } from './Icons';
 
 /** Re-check after this many words written or removed since the last check (pastes check at once). */
@@ -71,6 +72,7 @@ export default function Workspace({
   const [importing, setImporting] = useState<string | null>(null);
   const [confirmDeletePage, setConfirmDeletePage] = useState(false);
   const [confirmMovePage, setConfirmMovePage] = useState(false);
+  const [adding, setAdding] = useState<{ mode: 'link' | 'text'; target: 'knowledge base' | 'draft' } | null>(null);
 
   const projectRef = useRef(project);
   projectRef.current = project;
@@ -235,7 +237,9 @@ export default function Workspace({
 
   // ------------------------------------------------------------ rebuild the checklist
 
-  const doRebuild = async (newFiles?: File[]) => {
+  const doRebuild = async (input?: { files?: File[]; docs?: KbDocument[] }) => {
+    const newFiles = input?.files;
+    const readyDocs = input?.docs ?? [];
     setRebuild({ steps: initialSteps(), error: null });
     rebuilding.current = true;
     gen.current++;
@@ -251,10 +255,14 @@ export default function Workspace({
       let documents = projectRef.current.documents;
       let unread: Project['dropped'] = [];
       let addedRules = true;
-      if (newFiles?.length) {
-        set('read', { state: 'running', detail: `0 of ${newFiles.length}` });
+      if (newFiles?.length || readyDocs.length) {
+        const total = (newFiles?.length ?? 0) + readyDocs.length;
+        set('read', { state: 'running', detail: `0 of ${total}` });
         const maxId = Math.max(0, ...documents.map((d) => Number(d.id.slice(1)) || 0));
-        const { docs, failed } = await readFiles(newFiles, (n) => set('read', { detail: `${n} of ${newFiles.length}` }), maxId + 1);
+        const read = await readFiles(newFiles ?? [], (n) => set('read', { detail: `${n} of ${total}` }), maxId + 1);
+        const docs = [...read.docs, ...readyDocs.map((d, i) => ({ ...d, id: `D${maxId + 1 + read.docs.length + i}` }))];
+        const failed = read.failed;
+        if (!docs.length) throw new Error(failed.join('\n') || 'Nothing could be read.');
         unread = failed.map((f) => ({ title: f, reason: 'File could not be read.' }));
         set('read', { state: 'done', detail: `${docs.length} new file${docs.length === 1 ? '' : 's'}${failed.length ? `, ${failed.length} skipped` : ''}` });
         set('sort', { state: 'running' });
@@ -350,6 +358,16 @@ export default function Workspace({
     }
     setImporting(failed.length ? `Could not read: ${failed.join('; ')}` : null);
     if (failed.length) setTimeout(() => setImporting(null), 8000);
+  };
+
+  /** A web page or file behind a link becomes a draft page, checked at once. */
+  const addPageFromDoc = (d: KbDocument) => {
+    const id = nextPageId(projectRef.current.pages);
+    const text = d.text.replace(/\n*\[Page \d+\]\n?/g, '\n\n').trim();
+    lastWords.current = countWords(text);
+    updateSelf((x) => ({ ...x, pages: [...x.pages, { id, title: d.title || d.name.replace(/\.[a-z0-9]+$/i, ''), text }], activePageId: id }), true);
+    setView('draft');
+    setTimeout(() => void runCheck(id), 0);
   };
 
   const renamePage = (title: string) => {
@@ -474,7 +492,7 @@ export default function Workspace({
           onOpenProject={onOpen}
           onNew={onNew}
           onDelete={onDelete}
-          onAddFiles={(files) => void doRebuild(files)}
+          onAddFiles={(files) => void doRebuild({ files })}
           rolesChanged={rolesChanged}
           onRebuild={() => void doRebuild()}
           pages={project.pages}
@@ -484,6 +502,10 @@ export default function Workspace({
           onAddPageFiles={(f) => void addPageFiles(f)}
           importing={importing}
           checkingPageId={check.running ? check.pageId : undefined}
+          onOpenAdd={(mode, target) => {
+            setAdding({ mode, target });
+            setSidebarOpen(false);
+          }}
           view={view}
           onView={(v) => {
             setView(v);
@@ -605,6 +627,18 @@ export default function Workspace({
             const isRule = (r?: string) => !!r && SOURCE_ROLES.includes(r as never);
             if (isRule(before) || isRule(role)) setRolesChanged(true); // the rules change: rebuild
             else if (before === 'evidence' || role === 'evidence') factsChanged(); // only the facts change
+          }}
+        />
+      )}
+
+      {adding && (
+        <AddSourceDialog
+          mode={adding.mode}
+          target={adding.target}
+          onClose={() => setAdding(null)}
+          onAdd={(d) => {
+            if (adding.target === 'draft') addPageFromDoc(d);
+            else void doRebuild({ docs: [d] });
           }}
         />
       )}

@@ -22,9 +22,9 @@ Roles:
 - regulation: binding law or regulation text (e.g. a CFR part, an EU regulation).
 - guidance: official guidance from an authority about what a submission should contain.
 - standard: a standard, or a summary of one, that sets requirements (ISO, IEC, ASTM, internal rules derived from a standard).
-- evidence: the applicant's own material that backs up claims: study reports, test reports, risk files, certificates, labeling, specifications, technical files.
+- evidence ("project facts"): anything that states facts about the user's OWN project, product or organization: its status, approvals and authorizations, dossiers, study reports, test reports, risk files, certificates, labeling, specifications, technical files, internal notes or summaries of what is true about the project. Short pasted notes count.
 - draft: an earlier version of the submission document the user is now writing.
-- other: anything else (background reading, letters, unrelated files).
+- other: only material that is neither rules nor facts about the user's project (unrelated background reading, letters).
 
 For each file give: its id, role, a short title (max 8 words, from the document itself, no file extension) and a one-sentence summary of what it contains. Write plainly; never use the long dash character.`;
 

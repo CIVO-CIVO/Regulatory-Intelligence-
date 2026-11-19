@@ -1,5 +1,6 @@
 'use client';
 import { extractFile } from './extract';
+import { sourceLabel, sourceToDoc, type SourceInput } from './sources';
 import { postJson } from './api';
 import { newId } from './store';
 import { SOURCE_ROLES, type DocRole, type KbDocument, type Project, type Requirement } from '../types';
@@ -14,7 +15,7 @@ export interface Step {
 }
 
 export const initialSteps = (): Step[] => [
-  { key: 'read', label: 'Reading your files', state: 'waiting' },
+  { key: 'read', label: 'Reading your files and links', state: 'waiting' },
   { key: 'sort', label: 'Sorting rules from evidence', state: 'waiting' },
   { key: 'rules', label: 'Finding the rules in each rule document', state: 'waiting' },
   { key: 'questions', label: 'Writing how Jev judges each rule', state: 'waiting' },
@@ -30,6 +31,22 @@ function stepper(onProgress: Progress) {
     onProgress(steps.map((s) => ({ ...s })));
   };
   return { steps, update };
+}
+
+/** Files, web links and pasted text, read into documents (D1, D2, ... from startAt). */
+export async function readSources(sources: SourceInput[], onEach?: (done: number) => void, startAt = 1): Promise<{ docs: KbDocument[]; failed: string[] }> {
+  const docs: KbDocument[] = [];
+  const failed: string[] = [];
+  let i = 0;
+  for (const s of sources) {
+    try {
+      docs.push(await sourceToDoc(s, `D${startAt + docs.length}`));
+    } catch (err) {
+      failed.push(`${sourceLabel(s)}: ${(err as Error).message}`);
+    }
+    onEach?.(++i);
+  }
+  return { docs, failed };
 }
 
 export async function readFiles(files: File[], onEach?: (done: number) => void, startAt = 1): Promise<{ docs: KbDocument[]; failed: string[] }> {
@@ -61,7 +78,7 @@ export async function classify(description: string, docs: KbDocument[]): Promise
   });
   for (const d of docs) {
     const c = res.documents.find((x) => x.id === d.id);
-    d.role = c?.role ?? 'other';
+    d.role = d.role ?? c?.role ?? 'other'; // a role the user chose is kept
     d.title = c?.title;
     d.summary = c?.summary;
   }
@@ -158,19 +175,19 @@ export async function buildRequirements(
 }
 
 export async function createProject(
-  input: { name: string; description: string; files: File[] },
+  input: { name: string; description: string; sources: SourceInput[] },
   onProgress: Progress,
 ): Promise<Project> {
   const { update } = stepper(onProgress);
   const engines = await fetch('/api/status').then((r) => r.json()).catch(() => null);
 
-  update('read', { state: 'running', detail: `0 of ${input.files.length}` });
-  const { docs, failed } = await readFiles(input.files, (n) => update('read', { detail: `${n} of ${input.files.length}` }));
+  update('read', { state: 'running', detail: `0 of ${input.sources.length}` });
+  const { docs, failed } = await readSources(input.sources, (n) => update('read', { detail: `${n} of ${input.sources.length}` }));
   if (!docs.length) throw new Error(failed.join('\n') || 'No readable files.');
   const unreadable = docs.filter((d) => d.quality.lowTextPages.length && d.quality.lowTextPages.length === d.quality.pages);
   update('read', {
     state: 'done',
-    detail: `${docs.length} file${docs.length > 1 ? 's' : ''}${failed.length ? `, ${failed.length} skipped` : ''}${unreadable.length ? `, ${unreadable.length} without a text layer` : ''}`,
+    detail: `${docs.length} source${docs.length > 1 ? 's' : ''}${failed.length ? `, ${failed.length} skipped` : ''}${unreadable.length ? `, ${unreadable.length} without a text layer` : ''}`,
   });
 
   update('sort', { state: 'running' });

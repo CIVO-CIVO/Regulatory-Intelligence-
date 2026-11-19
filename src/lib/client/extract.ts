@@ -147,3 +147,66 @@ async function fromXlsx(buf: ArrayBuffer): Promise<string> {
   }
   return tidy(out.join('\n\n'));
 }
+
+// ------------------------------------------------------------ web pages
+
+const JUNK = 'script, style, noscript, template, svg, iframe, form, button, input, select, nav, header, footer, aside, [role=navigation], [role=banner], [role=contentinfo], [aria-hidden=true], .breadcrumb, .breadcrumbs, .skip-link, .visually-hidden, .sr-only, .cookie, .cookies, #cookie-banner';
+const MAIN = 'main, article, [role=main], #main-content, #main, #content, .main-content, .content, #fulltext_content_area, .body-content, .field--name-body';
+const BLOCK = new Set(['P', 'DIV', 'SECTION', 'ARTICLE', 'MAIN', 'BLOCKQUOTE', 'PRE', 'UL', 'OL', 'DL', 'DT', 'DD', 'TABLE', 'FIGURE', 'FIGCAPTION', 'ADDRESS', 'HR']);
+
+/** A web page as readable text: main content only, headings as "#" lines, lists as "-", table rows as "a | b". */
+export function htmlToDoc(html: string, baseUrl: string): { title: string; text: string; pdfLinks: string[] } {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const meta = doc.querySelector('meta[property="og:title"]')?.getAttribute('content');
+  const title = (meta || doc.title || doc.querySelector('h1')?.textContent || new URL(baseUrl).hostname).replace(/\s+/g, ' ').trim();
+  // Links to the page's main file (e.g. FDA guidance pages: "Download the Final Guidance Document").
+  const pdfLinks = Array.from(doc.querySelectorAll('a[href]'))
+    .map((a) => ({ href: a.getAttribute('href') ?? '', label: (a.textContent ?? '').trim() }))
+    .filter((a) => /\.pdf($|\?)|\/media\/\d+\/download/i.test(a.href))
+    .sort((a, b) => Number(/download|guidance|full text|pdf/i.test(b.label)) - Number(/download|guidance|full text|pdf/i.test(a.label)))
+    .map((a) => {
+      try {
+        return new URL(a.href, baseUrl).toString();
+      } catch {
+        return '';
+      }
+    })
+    .filter((u, i, all) => u && all.indexOf(u) === i);
+  doc.querySelectorAll(JUNK).forEach((n) => n.remove());
+  const candidates = Array.from(doc.querySelectorAll<HTMLElement>(MAIN));
+  const best = candidates.sort((a, b) => (b.textContent?.length ?? 0) - (a.textContent?.length ?? 0))[0];
+  const root = best && (best.textContent?.length ?? 0) > 500 ? best : doc.body;
+  const out: string[] = [];
+  const walk = (node: Node) => {
+    if (node.nodeType === 3) {
+      out.push((node.textContent ?? '').replace(/\s+/g, ' '));
+      return;
+    }
+    if (node.nodeType !== 1) return;
+    const el = node as HTMLElement;
+    const tag = el.tagName;
+    if (/^H[1-6]$/.test(tag)) {
+      out.push(`\n\n${'#'.repeat(Number(tag[1]))} ${(el.textContent ?? '').replace(/\s+/g, ' ').trim()}\n\n`);
+      return;
+    }
+    if (tag === 'BR') return void out.push('\n');
+    if (tag === 'LI') out.push('\n- ');
+    if (tag === 'TR') {
+      const cells = Array.from(el.children).map((c) => (c.textContent ?? '').replace(/\s+/g, ' ').trim());
+      out.push(`\n${cells.join(' | ')}`);
+      return;
+    }
+    if (BLOCK.has(tag)) out.push('\n\n');
+    el.childNodes.forEach(walk);
+    if (BLOCK.has(tag)) out.push('\n\n');
+  };
+  walk(root);
+  const text = tidy(
+    out
+      .join('')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n[ \t]+/g, '\n')
+      .replace(/\n{3,}/g, '\n\n'),
+  );
+  return { title, text, pdfLinks };
+}

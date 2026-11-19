@@ -15,7 +15,7 @@ export const ROLE_LABEL: Record<DocRole, string> = {
   other: 'Other',
 };
 
-export type DocKind = 'pdf' | 'docx' | 'xlsx' | 'csv' | 'text';
+export type DocKind = 'pdf' | 'docx' | 'xlsx' | 'csv' | 'text' | 'web';
 
 export interface KbDocument {
   id: string; // D1, D2 ...
@@ -34,6 +34,8 @@ export interface KbDocument {
   role?: DocRole;
   title?: string;
   summary?: string;
+  /** Set when the document was added from a web link. */
+  sourceUrl?: string;
 }
 
 /** A quotation that has been string-matched against the uploaded text. */

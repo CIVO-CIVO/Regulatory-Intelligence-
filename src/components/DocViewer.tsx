@@ -45,6 +45,14 @@ export default function DocViewer({
             </h2>
             {doc.title && doc.title !== doc.name && <p className="mt-0.5 truncate text-[13px] text-muted">{doc.title}</p>}
             {doc.summary && <p className="mt-2 text-[13px] leading-relaxed text-ink-2">{doc.summary}</p>}
+            {doc.sourceUrl && (
+              <p className="mt-2 truncate text-[12.5px] text-muted">
+                From{' '}
+                <a href={doc.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
+                  {doc.sourceUrl}
+                </a>
+              </p>
+            )}
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-muted">
               <label className="flex items-center gap-2">
                 Role
@@ -60,7 +68,7 @@ export default function DocViewer({
                   ))}
                 </select>
               </label>
-              <span>{doc.kind.toUpperCase()}</span>
+              <span>{doc.kind === 'web' ? 'Web page' : doc.kind.toUpperCase()}</span>
               {doc.quality.pages ? <span>{doc.quality.pages} pages</span> : null}
               <span>{Math.round(doc.quality.chars / 1000)}k characters</span>
             </div>
