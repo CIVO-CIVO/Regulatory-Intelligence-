@@ -99,7 +99,7 @@ export default function CompliancePanel({
         </p>
       )}
 
-      <div className="mt-4 flex flex-col gap-6">
+      <div className="mt-3 flex flex-col gap-3.5">
         {project.categories.map((cat) => {
           const all = active.filter((r) => r.category === cat);
           const rows = needsWork ? all.filter((r) => toneOf(r) !== 'green') : all;
@@ -107,7 +107,7 @@ export default function CompliancePanel({
           const green = all.filter((r) => toneOf(r) === 'green').length;
           return (
             <div key={cat}>
-              <div className="mb-1.5 flex items-baseline justify-between text-[14px] text-muted">
+              <div className="mb-0.5 flex items-baseline justify-between text-[12.5px] text-muted">
                 <h3>{cat}</h3>
                 <span>
                   {green}/{all.length} green
@@ -121,17 +121,17 @@ export default function CompliancePanel({
                       <button
                         type="button"
                         onClick={() => setSelected(r.id)}
-                        className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 py-[5px] text-left hover:bg-panel-2"
+                        className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-2.5 rounded-md px-2 py-[3px] text-left hover:bg-panel-2"
                         title={r.need}
                       >
-                        <span className="flex min-w-0 flex-1 items-center gap-1.5 text-[15.5px] text-ink">
+                        <span className="flex min-w-0 flex-1 items-center gap-1.5 text-[14px] leading-[18px] text-ink">
                           {r.focusNote && <span className="size-1.5 shrink-0 rounded-full bg-link" title={`Your focus: ${r.focusNote}`} />}
                           <span className="truncate">{r.title}</span>
                           {res?.contradiction && <IconAlert size={14} className="shrink-0 text-bad-text" aria-label="Conflicts with your evidence" />}
                           {res?.error && <IconAlert size={14} className="shrink-0 text-warn-text" aria-label="Not checked: the call failed" />}
                         </span>
-                        <span className="w-9 shrink-0 text-right text-[14px] tabular-nums text-muted">{res && !res.error ? `${res.passed}/${res.total}` : `0/${r.questions.length}`}</span>
-                        <ScoreBar score={res && !res.error ? res.score : null} tone={res?.tone ?? 'grey'} width={150} />
+                        <span className="w-8 shrink-0 text-right text-[12px] tabular-nums text-muted">{res && !res.error ? `${res.passed}/${res.total}` : `0/${r.questions.length}`}</span>
+                        <ScoreBar score={res && !res.error ? res.score : null} tone={res?.tone ?? 'grey'} width={112} height={16} />
                       </button>
                     </li>
                   );
