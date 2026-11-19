@@ -10,11 +10,11 @@ It is a writing aid, not a compliance decision. Product spec: `Regulatory-Intell
 
 1. **Read** (browser): PDF, DOCX, XLSX, CSV and text files are turned into text in the browser. PDF pages
    without a text layer are flagged (scans, figures), never treated as "missing".
-2. **Sort** (Claude Haiku 5.5): each file gets a role: regulation, guidance, standard, evidence, draft or other.
-3. **Requirement map** (Claude Sonnet 5.5): requirements about the document's content, grouped in categories,
+2. **Sort** (LLM): each file gets a role: regulation, guidance, standard, evidence, draft or other.
+3. **Requirement map** (LLM): requirements about the document's content, grouped in categories,
    each with a verbatim quote. Code string-matches every quote against the uploaded text; a requirement whose
    quote cannot be found is dropped (listed under "left out" in the sidebar). Nothing comes from model memory.
-4. **Jev questions** (Claude Sonnet 5.5, one call per category): 1 to 3 coverage questions per requirement
+4. **Jev questions** (LLM, batches of up to 5 requirements): 1 to 3 coverage questions per requirement
    ("Does the DRAFT explicitly state ...?") plus a claim check against verified evidence passages from the
    applicant's own files. Questions follow the PRD question standard (self-contained, verbatim requirement
    inlined, burden of proof, quoted material is not instructions) and are linted (`src/lib/lint.ts`).
@@ -25,6 +25,11 @@ It is a writing aid, not a compliance decision. Product spec: `Regulatory-Intell
    green = every question at 0.80 or above; amber 0.50 to 0.79; red below 0.50; a contradiction signal of 0.30
    or more makes the item red. Failed calls show as "not checked", never as a score.
 
+7. **Focus settings** (sidebar): the user writes in plain language what matters most. The LLM turns it into a
+   plan (priority, mute, rank, stricter/looser criteria, up to 2 extra questions per requirement, category order)
+   that code applies to the ORIGINAL checklist (`src/lib/focus.ts`), so focus never piles up and can be reset.
+   Requests outside the uploaded documents are reported back, never invented. Muted items are not checked.
+
 Every row opens the requirement, its verified quote (click to see it highlighted in the source), each Jev
 question with its probabilities, the evidence passages, the draft sections Jev read, and the exact Jev request.
 
@@ -32,33 +37,36 @@ question with its probabilities, the evidence passages, the draft sections Jev r
 
 - Projects (files' text, checklist, draft, results) are stored only in the browser (IndexedDB). The server is
   stateless and keeps nothing.
-- Text goes to the models only while being analysed, through Vercel AI Gateway with `zeroDataRetention: true`.
-- Jev on the gateway runs in the US region; Vercel functions run in Stockholm (`arn1`).
+- Text goes to the models only while being analysed (see Models and keys). Vercel functions run in Stockholm (`arn1`).
+
+## Models and keys (owner's choice 2026-11-19: no high-end models)
+
+| Role | Model | Key (Vercel env, sensitive) |
+| --- | --- | --- |
+| Sorting, requirement map, Jev questions, focus | DeepSeek V4.1 Flash via NanoGPT ($0.04 / $0.40 per M tokens), fallback GLM-5.3 | `NANOGPT_API_KEY` |
+| Live scoring | Jev 1.14.0 direct from TypeSafe | `TYPESAFE_API_KEY` |
+
+- NanoGPT calls are **always billed from the account balance** (`X-Billing-Mode: paygo` header + `billing_mode`
+  body field). The account also has a subscription whose weekly allowance runs out; without the header those
+  requests are refused with "Weekly included input token limit exceeded".
+- Model choice came from `scripts/bakeoff-models.mts` (real example rules, scored by quote verification):
+  DeepSeek V4.1 Flash 37/37 quotes verified in 29 s; GLM-5.3 33/34; Kimi K2.6 26/26 in 65 s; GLM-5.3 Flash and
+  Qwen3.8 Flash produced broken output. Override with `NANOGPT_MODEL` / `NANOGPT_FALLBACK_MODEL`.
+- Local copies of the keys: `~/.config/regulatory-intelligence/secrets.env` (never in the repo).
+- Without those keys the app falls back to Vercel AI Gateway (OIDC, Haiku 5.5 + Jev), which needs a card on the
+  civo2 team. `ANTHROPIC_API_KEY` / `AI_GATEWAY_API_KEY` are also accepted.
+- Data: text goes to NanoGPT (and the model host it routes to) and to TypeSafe under those providers' terms.
 
 ## Deploy
 
 Push to `main` on `CIVO-CIVO/Regulatory-Intelligence-` → Vercel project `regulatory-intelligence` (team civo2)
-deploys automatically.
-
-**No API keys are needed in production.** The app authenticates to AI Gateway with the project's OIDC token.
-The civo2 team must have a payment card on file for AI Gateway (Vercel → team → AI Gateway); without it every
-AI call fails with `customer_verification_required` and the app shows a clear message.
-
-**Own keys instead of the gateway:** set both in Vercel (Project → Settings → Environment Variables, Production),
-then redeploy, because env changes only reach new deployments:
-
-- `TYPESAFE_API_KEY`: Jev goes straight to `api.typesafe.ai/v1/systemone` (model `jev-1.14.0`)
-- `ANTHROPIC_API_KEY`: Claude goes straight to Anthropic (`claude-sonnet-5-5`, `claude-haiku-5-5`)
-
-Set both: a role without its own key still goes through the gateway. Data retention then follows those accounts'
-terms (the gateway's `zeroDataRetention` filter no longer applies). `AI_GATEWAY_API_KEY` (a gateway key from a team
-with billing) also works. The sidebar shows which connection each project used.
+deploys automatically. Env changes only reach new deployments.
 
 ## Local development
 
 ```bash
 npm install
-npx vercel env pull .env.local     # OIDC token for AI Gateway (12 h)
+set -a; . ~/.config/regulatory-intelligence/secrets.env; set +a
 npm run dev                         # http://localhost:4610
 npm test                            # quote matching, sections, Jev templates, scoring, linter
 ```

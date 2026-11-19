@@ -70,6 +70,27 @@ export interface Requirement {
   questions: JevQuestionSpec[];
   evidence: Quote[]; // verified passages from the user's evidence files
   hint?: string;
+  /** Set by the user's focus settings: left out of checks and counts. */
+  muted?: boolean;
+  /** Focus ranking inside the category (1 = most important). */
+  rank?: number;
+  /** Why the focus settings changed this requirement. */
+  focusNote?: string;
+}
+
+export interface FocusChange {
+  reqId: string;
+  title: string;
+  what: string;
+}
+
+export interface FocusState {
+  text: string;
+  appliedAt: number;
+  summary: string;
+  notes: string[];
+  changes: FocusChange[];
+  model?: string;
 }
 
 export interface QuestionResult {
@@ -122,6 +143,10 @@ export interface Project {
   documents: KbDocument[];
   categories: string[];
   requirements: Requirement[];
+  /** The checklist as built from the documents, before focus settings (focus is always applied to this). */
+  baseRequirements?: Requirement[];
+  baseCategories?: string[];
+  focus?: FocusState;
   dropped: DroppedRequirement[];
   draft: string;
   results: Record<string, RequirementResult>;

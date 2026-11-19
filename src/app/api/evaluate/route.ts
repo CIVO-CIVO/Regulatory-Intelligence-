@@ -80,6 +80,8 @@ export async function POST(req: Request) {
             }
             answers.set(r.id, list);
           } catch (err) {
+            const cause = (err as { cause?: { code?: string } }).cause;
+            console.warn(`[evaluate] ${job.key} failed: ${String((err as Error).message).slice(0, 160)} ${cause?.code ?? ''}`);
             const d = describeAiError(err);
             firstError ??= d;
             errors.set(r.id, d.message);

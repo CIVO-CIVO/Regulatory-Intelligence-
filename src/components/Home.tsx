@@ -252,8 +252,8 @@ export default function Home({
         )}
 
         <p className="mt-10 max-w-[640px] text-[12px] leading-relaxed text-faint">
-          Your files and drafts are stored only in this browser. Their text is sent to the AI models (Claude to build the checklist, Jev to check
-          your draft) while they are being analysed
+          Your files and drafts are stored only in this browser. Their text is sent to the AI models (a language model to build the checklist, Jev
+          to check your draft) while they are being analysed
           {status && /Gateway/.test(`${status.jev} ${status.llm}`) && !/TypeSafe|Anthropic/.test(`${status.jev} ${status.llm}`)
             ? ', with zero data retention,'
             : ", under the AI providers' own data terms,"}{' '}

@@ -1,13 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { KbDocument, Project, ProjectSummary, Quote, RequirementResult } from '@/lib/types';
+import type { FocusState, KbDocument, Project, ProjectSummary, Quote, Requirement } from '@/lib/types';
+import { applyFocus, type FocusPlan } from '@/lib/focus';
+import { postJson } from '@/lib/client/api';
 import { countWords } from '@/lib/text';
 import { streamEvaluate } from '@/lib/client/api';
 import { buildRequirements, classify, initialSteps, readFiles, type Step } from '@/lib/client/build';
 import Sidebar from './Sidebar';
 import CompliancePanel from './CompliancePanel';
 import DocViewer from './DocViewer';
+import FocusSettings from './FocusSettings';
 import { IconAlert, IconCheck, IconMenu, Spinner } from './Icons';
 
 /** Re-check after this many words written or removed since the last check (pastes check at once). */
@@ -44,6 +47,9 @@ export default function Workspace({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rebuild, setRebuild] = useState<{ steps: Step[]; error: string | null } | null>(null);
   const [rolesChanged, setRolesChanged] = useState(false);
+  const [view, setView] = useState<'draft' | 'focus'>('draft');
+  const [focusBusy, setFocusBusy] = useState(false);
+  const [focusError, setFocusError] = useState<string | null>(null);
 
   const projectRef = useRef(project);
   projectRef.current = project;
@@ -73,7 +79,8 @@ export default function Workspace({
     }
     if (idle.current) clearTimeout(idle.current);
     const p = projectRef.current;
-    if (p.status !== 'ready' || !p.requirements.length) return;
+    const active = p.requirements.filter((r) => !r.muted);
+    if (p.status !== 'ready' || !active.length) return;
     const draft = p.draft;
     setWordsSince(0);
     if (countWords(draft) < 3) {
@@ -86,13 +93,13 @@ export default function Workspace({
     again.current = false;
     const ac = new AbortController();
     abort.current = ac;
-    setCheck({ running: true, done: 0, total: p.requirements.length, error: null });
+    setCheck({ running: true, done: 0, total: active.length, error: null });
     let received = 0;
     let sawDone = false;
     let error: CheckState['error'] = null;
     try {
       await streamEvaluate(
-        { draft, docs: p.documents.map((d) => ({ id: d.id, name: d.name })), requirements: p.requirements },
+        { draft, docs: p.documents.map((d) => ({ id: d.id, name: d.name })), requirements: active },
         (e) => {
           if (!current()) return;
           if (e.type === 'result') {
@@ -106,11 +113,11 @@ export default function Workspace({
         },
         ac.signal,
       );
-      if (!sawDone || received < p.requirements.length) {
+      if (!sawDone || received < active.length) {
         error ??= { code: 'incomplete', message: 'The check was cut off before every requirement was answered. Use "Check now" to try again.' };
       }
       // Only a complete check counts as current; otherwise the panel keeps saying the draft changed.
-      if (current() && sawDone && received === p.requirements.length) {
+      if (current() && sawDone && received === active.length) {
         updateSelf((x) => ({ ...x, checkedDraft: draft, lastCheckAt: Date.now() }), true);
       }
     } catch (err) {
@@ -195,8 +202,24 @@ export default function Workspace({
       }
       const map = await buildRequirements({ ...projectRef.current, documents }, set);
       const earlierUnread = projectRef.current.dropped.filter((d) => d.reason === 'File could not be read.');
+      // The new checklist is the new base; an existing focus is re-applied to it (ids have changed).
+      const focusText = projectRef.current.focus?.text;
+      const focused = focusText ? await planFocus(map.requirements, map.categories, focusText).catch(() => null) : null;
       updateSelf(
-        (x) => ({ ...x, documents, ...map, dropped: [...earlierUnread, ...unread, ...map.dropped], results: {}, checkedDraft: undefined, lastCheckAt: undefined, status: 'ready' }),
+        (x) => ({
+          ...x,
+          documents,
+          baseRequirements: map.requirements,
+          baseCategories: map.categories,
+          requirements: focused?.requirements ?? map.requirements,
+          categories: focused?.categories ?? map.categories,
+          focus: focused?.focus,
+          dropped: [...earlierUnread, ...unread, ...map.dropped],
+          results: {},
+          checkedDraft: undefined,
+          lastCheckAt: undefined,
+          status: 'ready',
+        }),
         true,
       );
       setRolesChanged(false);
@@ -207,6 +230,56 @@ export default function Workspace({
       rebuilding.current = false;
       setRebuild({ steps: steps.map((s) => ({ ...s })), error: (err as Error).message });
     }
+  };
+
+  const planFocus = async (base: Requirement[], baseCategories: string[], text: string) => {
+    const p = projectRef.current;
+    const res = await postJson<{ plan: FocusPlan; model: string }>(
+      '/api/focus',
+      { description: p.description, focus: text, categories: baseCategories, requirements: base },
+      { gzip: true },
+    );
+    const applied = applyFocus(base, baseCategories, res.plan);
+    const focus: FocusState = {
+      text,
+      appliedAt: Date.now(),
+      summary: res.plan.summary,
+      notes: res.plan.notes,
+      changes: applied.changes,
+      model: res.model,
+    };
+    return { requirements: applied.requirements, categories: applied.categories, focus };
+  };
+
+  /** Replace the checklist and start a fresh check (old results belong to the old checklist). */
+  const swapChecklist = (patch: Partial<Project>) => {
+    gen.current++;
+    again.current = false;
+    abort.current?.abort();
+    updateSelf((x) => ({ ...x, ...patch, results: {}, checkedDraft: undefined, lastCheckAt: undefined }), true);
+    setTimeout(() => void runCheck(), 50);
+  };
+
+  const applyFocusText = async (text: string) => {
+    const p = projectRef.current;
+    const base = p.baseRequirements ?? p.requirements;
+    const baseCategories = p.baseCategories ?? p.categories;
+    setFocusBusy(true);
+    setFocusError(null);
+    try {
+      const f = await planFocus(base, baseCategories, text.trim());
+      swapChecklist({ baseRequirements: base, baseCategories, ...f });
+    } catch (err) {
+      setFocusError((err as Error).message);
+    } finally {
+      setFocusBusy(false);
+    }
+  };
+
+  const resetFocus = () => {
+    const p = projectRef.current;
+    if (!p.baseRequirements) return;
+    swapChecklist({ requirements: p.baseRequirements, categories: p.baseCategories ?? p.categories, focus: undefined });
   };
 
   const openQuote = (q: Quote) => {
@@ -251,9 +324,26 @@ export default function Workspace({
           onAddFiles={(files) => void doRebuild(files)}
           rolesChanged={rolesChanged}
           onRebuild={() => void doRebuild()}
+          view={view}
+          onView={(v) => {
+            setView(v);
+            setMobileTab('draft');
+            setSidebarOpen(false);
+          }}
         />
 
-        <section className={`min-h-0 flex-col bg-panel lg:flex ${mobileTab === 'draft' ? 'flex' : 'hidden'}`} aria-label="Submission draft">
+        <section className={`min-h-0 flex-col bg-panel lg:flex ${mobileTab === 'draft' ? 'flex' : 'hidden'}`} aria-label={view === 'focus' ? 'Focus settings' : 'Submission draft'}>
+          {view === 'focus' ? (
+            <FocusSettings
+              project={project}
+              busy={focusBusy}
+              error={focusError}
+              onApply={(t) => void applyFocusText(t)}
+              onReset={resetFocus}
+              onBack={() => setView('draft')}
+            />
+          ) : (
+          <>
           <div className="flex items-baseline justify-between gap-4 px-6 pb-3 pt-6 sm:px-9">
             <h2 className="text-[19px] font-medium text-ink">Submission draft</h2>
             <span className="text-[15px] tabular-nums text-muted">{words} words</span>
@@ -271,6 +361,8 @@ export default function Workspace({
             aria-label="Submission draft text"
           />
           <CheckFooter check={check} wordsSince={wordsSince} hasDraft={words > 2} onCheck={() => void runCheck()} lastCheckAt={project.lastCheckAt} changed={project.draft !== project.checkedDraft} />
+          </>
+          )}
         </section>
 
         <div className={`min-h-0 lg:block ${mobileTab === 'compliance' ? 'block' : 'hidden'}`}>

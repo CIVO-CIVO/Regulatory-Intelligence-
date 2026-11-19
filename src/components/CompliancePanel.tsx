@@ -40,9 +40,13 @@ export default function CompliancePanel({
   const resultOf = (r: Requirement): RequirementResult | undefined => (hasDraft ? project.results[r.id] : undefined);
   const toneOf = (r: Requirement): Tone => resultOf(r)?.tone ?? 'grey';
 
+  const active = project.requirements.filter((r) => !r.muted);
+  const muted = project.requirements.filter((r) => r.muted);
+  const [showMuted, setShowMuted] = useState(false);
+
   const tally = useMemo(() => {
     const t = { green: 0, amber: 0, red: 0, grey: 0 };
-    for (const r of project.requirements) t[toneOf(r)]++;
+    for (const r of project.requirements) if (!r.muted) t[toneOf(r)]++;
     return t;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project.requirements, project.results, hasDraft]);
@@ -81,7 +85,7 @@ export default function CompliancePanel({
       </div>
       <div className="mt-2.5 flex items-center justify-between text-[15px]">
         <span className="text-ink-2">
-          {tally.green} of {project.requirements.length} green
+          {tally.green} of {active.length} green
           {stale && <span className="ml-2 text-[12px] text-faint">draft changed since</span>}
         </span>
         <button type="button" onClick={() => setNeedsWork((v) => !v)} aria-pressed={needsWork} className="text-link hover:underline">
@@ -97,7 +101,7 @@ export default function CompliancePanel({
 
       <div className="mt-4 flex flex-col gap-6">
         {project.categories.map((cat) => {
-          const all = project.requirements.filter((r) => r.category === cat);
+          const all = active.filter((r) => r.category === cat);
           const rows = needsWork ? all.filter((r) => toneOf(r) !== 'green') : all;
           if (!rows.length) return null;
           const green = all.filter((r) => toneOf(r) === 'green').length;
@@ -121,6 +125,7 @@ export default function CompliancePanel({
                         title={r.need}
                       >
                         <span className="flex min-w-0 flex-1 items-center gap-1.5 text-[15.5px] text-ink">
+                          {r.focusNote && <span className="size-1.5 shrink-0 rounded-full bg-link" title={`Your focus: ${r.focusNote}`} />}
                           <span className="truncate">{r.title}</span>
                           {res?.contradiction && <IconAlert size={14} className="shrink-0 text-bad-text" aria-label="Conflicts with your evidence" />}
                           {res?.error && <IconAlert size={14} className="shrink-0 text-warn-text" aria-label="Not checked: the call failed" />}
@@ -136,6 +141,26 @@ export default function CompliancePanel({
           );
         })}
       </div>
+
+      {muted.length > 0 && (
+        <div className="mt-8">
+          <button type="button" onClick={() => setShowMuted((v) => !v)} className="text-[13px] text-muted hover:text-ink">
+            {showMuted ? 'Hide' : 'Show'} {muted.length} muted by your focus
+          </button>
+          {showMuted && (
+            <ul className="mt-2 flex flex-col">
+              {muted.map((r) => (
+                <li key={r.id}>
+                  <button type="button" onClick={() => setSelected(r.id)} className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-2 rounded-lg px-2 py-1 text-left text-[14px] text-faint hover:bg-panel-2" title={r.focusNote}>
+                    <span className="truncate">{r.title}</span>
+                    <span className="ml-auto shrink-0 text-[12px]">{r.category}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       <p className="mt-10 text-[12px] leading-relaxed text-faint">
         Scores are Jev support signals (0 to 100) from your own files only: the weakest question for each requirement counts. Green means every

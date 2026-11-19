@@ -53,3 +53,6 @@ export const Spinner = ({ className, size = 16 }: P) => (
     <path d="M21 12a9 9 0 0 0-9-9" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
   </svg>
 );
+export const IconSliders = ({ className, size }: P) => (
+  <svg {...base(size)} className={className}><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" /></svg>
+);

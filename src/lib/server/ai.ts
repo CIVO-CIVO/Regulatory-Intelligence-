@@ -11,14 +11,19 @@ import {
   type Experimental_DecisionState,
 } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
-import type { z } from 'zod';
+import { z } from 'zod';
 import type { DecisionAnswer, DecisionQuestion } from '../jev';
 import { mockDecide } from './jev-mock';
 
 export const JEV_MODEL = 'typesafe-ai/jev-1.14.0'; // pinned, never the moving alias
 const TYPESAFE_MODEL = 'jev-1.14.0';
+// Owner's rule (2026-11-19): no high-end models. NanoGPT (billed from the balance) is the main path.
+const NANO = {
+  main: process.env.NANOGPT_MODEL?.trim() || 'deepseek/deepseek-v4.1-flash',
+  fallback: process.env.NANOGPT_FALLBACK_MODEL?.trim() || 'z-ai/glm-5.3',
+};
 const LLM = {
-  strong: { gateway: 'anthropic/claude-sonnet-5.5', direct: 'claude-sonnet-5-5' },
+  strong: { gateway: 'anthropic/claude-haiku-5.5', direct: 'claude-haiku-5-5' },
   fast: { gateway: 'anthropic/claude-haiku-5.5', direct: 'claude-haiku-5-5' },
 } as const;
 export type LlmTier = keyof typeof LLM;
@@ -34,8 +39,9 @@ export function jevBackend(): 'mock' | 'typesafe' | 'gateway' {
   return 'gateway';
 }
 
-export function llmBackend(): 'claude-cli' | 'anthropic' | 'gateway' {
+export function llmBackend(): 'claude-cli' | 'nanogpt' | 'anthropic' | 'gateway' {
   if (process.env.LLM_BACKEND === 'claude-cli' && devBackendsAllowed) return 'claude-cli';
+  if (process.env.NANOGPT_API_KEY?.trim()) return 'nanogpt';
   if (process.env.ANTHROPIC_API_KEY?.trim()) return 'anthropic';
   return 'gateway';
 }
@@ -45,7 +51,12 @@ export function engines() {
   const llm = llmBackend();
   return {
     jev: jev === 'mock' ? 'Jev MOCK (dev only)' : `Jev 1.14.0 via ${jev === 'typesafe' ? 'TypeSafe' : 'AI Gateway'}`,
-    llm: llm === 'claude-cli' ? 'Claude via Claude Code CLI (dev only)' : `Claude 5.5 via ${llm === 'anthropic' ? 'Anthropic' : 'AI Gateway'}`,
+    llm:
+      llm === 'claude-cli'
+        ? 'Claude via Claude Code CLI (dev only)'
+        : llm === 'nanogpt'
+          ? `${modelLabel(NANO.main)} via NanoGPT (balance)`
+          : `Claude Haiku 5.5 via ${llm === 'anthropic' ? 'Anthropic' : 'AI Gateway'}`,
     mock: jev === 'mock',
   };
 }
@@ -61,6 +72,7 @@ export async function llmObject<T>(opts: {
   abortSignal?: AbortSignal;
 }): Promise<T> {
   const backend = llmBackend();
+  if (backend === 'nanogpt') return nanoObject(opts);
   if (backend === 'claude-cli') {
     const { cliObject } = await import('./claude-cli');
     return cliObject({ ...opts, model: LLM[opts.tier].direct });
@@ -81,6 +93,92 @@ export async function llmObject<T>(opts: {
     maxRetries: 2,
   });
   return res.output as T;
+}
+
+function modelLabel(id: string): string {
+  const known: Record<string, string> = {
+    'deepseek/deepseek-v4.1-flash': 'DeepSeek V4.1 Flash',
+    'z-ai/glm-5.3': 'GLM-5.3',
+  };
+  return known[id] ?? id;
+}
+
+/**
+ * NanoGPT (OpenAI-compatible). Always billed from the account BALANCE: the account also has a
+ * subscription whose weekly allowance runs out and then refuses requests, so every call forces
+ * pay-as-you-go (header X-Billing-Mode + body billing_mode). Main model first, fallback model once.
+ */
+async function nanoObject<T>(opts: {
+  system: string;
+  prompt: string;
+  schema: z.ZodType<T>;
+  maxOutputTokens?: number;
+  abortSignal?: AbortSignal;
+}): Promise<T> {
+  const schema = z.toJSONSchema(opts.schema);
+  const system = `${opts.system}\n\nReply with one JSON object only (no prose, no code fences) matching this JSON Schema:\n${JSON.stringify(schema)}`;
+  let lastErr: unknown;
+  for (const model of [NANO.main, NANO.fallback]) {
+    const t0 = Date.now();
+    try {
+      const res = await fetch('https://nano-gpt.com/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.NANOGPT_API_KEY}`,
+          'Content-Type': 'application/json',
+          'X-Billing-Mode': 'paygo',
+        },
+        body: JSON.stringify({
+          model,
+          billing_mode: 'paygo',
+          temperature: 0.2,
+          max_tokens: opts.maxOutputTokens ?? 16000,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: opts.prompt },
+          ],
+          response_format: { type: 'json_schema', json_schema: { name: 'result', strict: true, schema } },
+        }),
+        signal: opts.abortSignal ?? AbortSignal.timeout(240_000),
+      });
+      const text = await res.text();
+      if (!res.ok) throw Object.assign(new Error(`NanoGPT HTTP ${res.status}: ${text.slice(0, 300)}`), { statusCode: res.status, responseBody: text.slice(0, 2000) });
+      const json = JSON.parse(text) as { choices?: { message?: { content?: string }; finish_reason?: string }[]; usage?: { prompt_tokens?: number; completion_tokens?: number } };
+      const content = json.choices?.[0]?.message?.content ?? '';
+      if (json.choices?.[0]?.finish_reason === 'length') throw new Error(`${model} ran out of output tokens`);
+      const parsed = opts.schema.parse(JSON.parse(firstJsonObject(content)));
+      console.log(`[llm] ${model} ok ${Date.now() - t0} ms, tokens ${json.usage?.prompt_tokens ?? '?'} in / ${json.usage?.completion_tokens ?? '?'} out`);
+      return parsed;
+    } catch (err) {
+      lastErr = err;
+      console.warn(`[llm] ${model} failed after ${Date.now() - t0} ms: ${String((err as Error).message ?? err).slice(0, 200)}`);
+      if ((err as { statusCode?: number }).statusCode === 401) break; // bad key: the fallback will not help
+    }
+  }
+  throw lastErr;
+}
+
+/** The first balanced {...} object in a model reply (ignores fences, think tags and trailing prose). */
+export function firstJsonObject(s: string): string {
+  const cleaned = s.replace(/<think>[\s\S]*?<\/think>/g, '');
+  const start = cleaned.indexOf('{');
+  if (start < 0) throw new Error('No JSON object in the reply.');
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < cleaned.length; i++) {
+    const c = cleaned[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}' && --depth === 0) return cleaned.slice(start, i + 1);
+  }
+  throw new Error('Unterminated JSON object in the reply.');
 }
 
 // ---------------------------------------------------------------- Jev
@@ -135,15 +233,26 @@ async function typesafeDecide(
     Object.entries(questions).map(([id, q]) => [id, { ...q, type: q.type === 'boolean' ? 'noul' : q.type }]),
   );
   const body = JSON.stringify({ model: TYPESAFE_MODEL, state, questions: wireQuestions });
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const res = await fetch('https://api.typesafe.ai/v1/systemone', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${process.env.TYPESAFE_API_KEY}`, 'Content-Type': 'application/json' },
-      body,
-      signal: abortSignal,
-      redirect: 'error',
-    });
-    if ([429, 502, 503, 529].includes(res.status) && attempt < 3) {
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch('https://api.typesafe.ai/v1/systemone', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.TYPESAFE_API_KEY}`, 'Content-Type': 'application/json' },
+        body,
+        signal: abortSignal,
+        redirect: 'error',
+      });
+    } catch (err) {
+      // Dropped connections ("fetch failed": a reused keep-alive socket the server already closed,
+      // a reset, a DNS blip) are retried; an abort from the caller is not.
+      if (abortSignal?.aborted || attempt === 4) throw err;
+      const cause = (err as { cause?: { code?: string; message?: string } }).cause;
+      console.warn(`[jev] network error, retry ${attempt}: ${(err as Error).message} ${cause?.code ?? ''} ${cause?.message ?? ''}`);
+      await new Promise((r) => setTimeout(r, 150 * 2 ** attempt));
+      continue;
+    }
+    if ([429, 500, 502, 503, 504, 529].includes(res.status) && attempt < 4) {
       await res.body?.cancel();
       await new Promise((r) => setTimeout(r, 400 * 2 ** attempt));
       continue;
@@ -192,5 +301,8 @@ export function describeAiError(err: unknown): { message: string; code: string }
     return { code: 'auth', message: 'The AI connection could not authenticate. Check the deployment settings.' };
   }
   if (statuses.includes(429)) return { code: 'rate_limit', message: 'The AI service is busy. Try again in a moment.' };
+  if (/fetch failed|ECONNRESET|socket|ETIMEDOUT|EAI_AGAIN/i.test(text)) {
+    return { code: 'network', message: 'Could not reach the AI service (network error). Use "Check now" to try again.' };
+  }
   return { code: 'error', message: text.slice(0, 300) };
 }

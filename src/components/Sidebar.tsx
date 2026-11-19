@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { ROLE_LABEL, SOURCE_ROLES, type KbDocument, type Project, type ProjectSummary } from '@/lib/types';
 import { ACCEPT } from '@/lib/client/extract';
-import { IconAlert, IconBooks, IconDoc, IconFile, IconFolder, IconPen, IconPlus, IconRefresh, IconX } from './Icons';
+import { IconAlert, IconBooks, IconDoc, IconFile, IconFolder, IconPen, IconPlus, IconRefresh, IconSliders, IconX } from './Icons';
 
 export default function Sidebar({
   project,
@@ -17,6 +17,8 @@ export default function Sidebar({
   onAddFiles,
   rolesChanged,
   onRebuild,
+  view,
+  onView,
 }: {
   project: Project;
   projects: ProjectSummary[];
@@ -29,6 +31,8 @@ export default function Sidebar({
   onAddFiles: (files: File[]) => void;
   rolesChanged: boolean;
   onRebuild: () => void;
+  view: 'draft' | 'focus';
+  onView: (v: 'draft' | 'focus') => void;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -101,10 +105,26 @@ export default function Sidebar({
           <IconPen size={16} className="shrink-0" />
           <span>Writing</span>
         </div>
-        <div className="ml-5 flex items-center gap-2 rounded-md py-1.5 text-ink">
+        <button
+          type="button"
+          onClick={() => onView('draft')}
+          aria-current={view === 'draft' ? 'page' : undefined}
+          className={`ml-5 flex items-center gap-2 rounded-md py-1.5 text-left ${view === 'draft' ? 'text-ink' : 'text-ink-2 hover:text-ink'}`}
+        >
           <IconDoc size={16} className="shrink-0" />
           <span className="truncate">Submission draft</span>
-        </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onView('focus')}
+          aria-current={view === 'focus' ? 'page' : undefined}
+          className={`mt-5 flex items-center gap-2.5 py-1.5 text-left ${view === 'focus' ? 'text-ink' : 'text-ink-2 hover:text-ink'}`}
+        >
+          <IconSliders size={16} className="shrink-0" />
+          <span>Focus settings</span>
+          {project.focus && <span className="size-1.5 rounded-full bg-link" aria-label="Focus applied" />}
+        </button>
       </div>
 
       {others.length > 0 && (

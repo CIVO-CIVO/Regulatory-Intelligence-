@@ -188,5 +188,13 @@ export async function createProject(
     engines: engines ? { llm: engines.llm, jev: engines.jev } : undefined,
   };
   const map = await buildRequirements(project, update);
-  return { ...project, ...map, dropped: [...project.dropped, ...map.dropped], status: 'ready', updatedAt: Date.now() };
+  return {
+    ...project,
+    ...map,
+    baseRequirements: map.requirements,
+    baseCategories: map.categories,
+    dropped: [...project.dropped, ...map.dropped],
+    status: 'ready',
+    updatedAt: Date.now(),
+  };
 }

@@ -75,6 +75,14 @@ export default function RequirementDetail({
       </div>
       <p className={`mt-2 text-[14px] ${live?.contradiction ? 'text-bad-text' : 'text-muted'}`}>{summary}</p>
 
+      {(req.focusNote || req.muted) && (
+        <div className="mt-5 rounded-xl border border-link/30 bg-link/5 px-4 py-3 text-[13px] leading-relaxed text-ink-2">
+          <span className="text-link">Your focus: </span>
+          {req.muted ? 'muted, so it is not checked or counted. ' : ''}
+          {req.focusNote}
+        </div>
+      )}
+
       <Block title="What the draft must contain">
         <p className="text-[15px] leading-relaxed text-ink">{req.need}</p>
         {req.hint && <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{req.hint}</p>}
