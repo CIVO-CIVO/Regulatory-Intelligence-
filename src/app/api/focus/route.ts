@@ -2,6 +2,7 @@ import { engines, llmObject } from '@/lib/server/ai';
 import { FOCUS_SYSTEM, focusSchema } from '@/lib/server/prompts';
 import { errorResponse, HttpError, readJson } from '@/lib/server/http';
 import type { Requirement } from '@/lib/types';
+import { ruleView } from '@/lib/rules';
 
 export const maxDuration = 300;
 
@@ -26,10 +27,8 @@ export async function POST(req: Request) {
         const rows = body.requirements
           .filter((r) => r.category === c)
           .map((r) => {
-            const qs = r.questions
-              .map((q) => `    - ${q.id} [${q.kind}] ${q.element}${q.trueWhen ? ` | true when: ${q.trueWhen}` : ''}${q.falseWhen ? ` | false when: ${q.falseWhen}` : ''}`)
-              .join('\n');
-            return `  <requirement id="${r.id}" title="${r.title}" priority="${r.criticality}">\n    Need: ${r.need}\n    Rule quote: "${r.quote.text.replace(/\s+/g, ' ').slice(0, 500)}"\n    Questions:\n${qs}\n  </requirement>`;
+            const v = ruleView(r);
+            return `  <rule id="${r.id}" section="${r.section ?? ''}" title="${r.title}" priority="${r.criticality}">\n    Requires: ${r.need}\n    Topic: ${v.topic}\n    Complies when: ${v.complies}\n    Conflicts when: ${v.conflicts}\n  </rule>`;
           })
           .join('\n');
         return `<category name="${c}">\n${rows}\n</category>`;
@@ -42,7 +41,7 @@ The user's focus, in their own words:
 ${focus}
 """
 
-The current checklist (built only from the user's uploaded documents):
+The current rules (built only from the user's uploaded documents), by group:
 ${checklist}
 
 Return the changes now.`;

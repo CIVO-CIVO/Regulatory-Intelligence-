@@ -1,7 +1,6 @@
 // Focus settings: the user's plain-language priorities, turned by the LLM into a plan, applied here
 // in code to the ORIGINAL checklist (never cumulative, always reversible).
 
-import { lintElement } from './lint';
 import type { Criticality, FocusChange, Requirement } from './types';
 
 export interface FocusPlanItem {
@@ -9,8 +8,9 @@ export interface FocusPlanItem {
   priority: Criticality | 'unchanged';
   muted: boolean;
   rank: number; // 1 = most important in its category, 0 = unchanged
-  sharpen: { questionId: string; trueWhen: string; falseWhen: string }[];
-  addQuestions: { element: string; trueWhen: string; falseWhen: string }[];
+  topic: string; // "" = unchanged
+  complies: string; // "" = unchanged
+  conflicts: string; // "" = unchanged
   reason: string;
 }
 
@@ -21,7 +21,6 @@ export interface FocusPlan {
   requirements: FocusPlanItem[];
 }
 
-const MAX_QUESTIONS = 5;
 const CRIT_ORDER: Record<Criticality, number> = { critical: 0, major: 1, minor: 2 };
 
 export function applyFocus(
@@ -46,27 +45,17 @@ export function applyFocus(
       what.push('muted');
     }
     if (item.rank > 0) r.rank = Math.round(item.rank);
-    for (const sh of item.sharpen) {
-      const q = r.questions.find((x) => x.id === sh.questionId);
-      if (!q) continue;
-      if (sh.trueWhen.trim()) q.trueWhen = sh.trueWhen.trim();
-      if (sh.falseWhen.trim()) q.falseWhen = sh.falseWhen.trim();
-      what.push(`criteria changed for "${q.element}"`);
+    if (item.topic.trim()) {
+      r.topic = item.topic.trim();
+      what.push('applies to different text');
     }
-    let n = 0;
-    for (const add of item.addQuestions) {
-      const element = add.element.trim().replace(/[?.]+$/, '');
-      if (!element || r.questions.length >= MAX_QUESTIONS) continue;
-      n++;
-      r.questions.push({
-        id: `${r.id}.f${n}`,
-        kind: 'coverage',
-        element,
-        trueWhen: add.trueWhen.trim() || undefined,
-        falseWhen: add.falseWhen.trim() || undefined,
-        lint: lintElement(element),
-      });
-      what.push(`new question: "${element}"`);
+    if (item.complies.trim()) {
+      r.complies = item.complies.trim();
+      what.push('what counts as following it changed');
+    }
+    if (item.conflicts.trim()) {
+      r.conflicts = item.conflicts.trim();
+      what.push('what counts as breaking it changed');
     }
     if (what.length || item.rank > 0) {
       r.focusNote = item.reason.trim() || undefined;

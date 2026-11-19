@@ -10,7 +10,7 @@ export const ROLE_LABEL: Record<DocRole, string> = {
   regulation: 'Regulation',
   guidance: 'Guidance',
   standard: 'Standard',
-  evidence: 'Evidence',
+  evidence: 'Project facts',
   draft: 'Submission draft',
   other: 'Other',
 };
@@ -70,6 +70,14 @@ export interface Requirement {
   questions: JevQuestionSpec[];
   evidence: Quote[]; // verified passages from the user's evidence files
   hint?: string;
+  /** Section number as written in the source, e.g. "§ 164.312(b)". */
+  section?: string;
+  /** What a page must be about for this rule to apply (Jev relevance gate). */
+  topic?: string;
+  /** Concretely, what text that follows the rule says. */
+  complies?: string;
+  /** Concretely, what text that breaks the rule says or claims (red flags). */
+  conflicts?: string;
   /** Set by the user's focus settings: left out of checks and counts. */
   muted?: boolean;
   /** Focus ranking inside the category (1 = most important). */
@@ -154,6 +162,10 @@ export interface Project {
   /** Legacy single-draft field (projects before pages); migrated into pages on load. */
   draft?: string;
   results: Record<string, RequirementResult>;
+  /** Engine 2: per-page checks with relevance gating, keyed by page id. */
+  pageChecks?: Record<string, PageCheck>;
+  /** 2 = rules built for page-by-page relevance checks. Older projects use a fallback until rebuilt. */
+  engine?: number;
   lastCheckAt?: number;
   /** The pages as they were at the last completed check (to rebuild the exact Jev requests). */
   checkedPages?: PageText[];
@@ -170,6 +182,38 @@ export interface PageText {
 
 export interface DraftPage extends PageText {
   id: string;
+}
+
+/** One rule judged against one page: neutral unless the page is about the rule's topic. */
+export interface RuleCheck {
+  reqId: string;
+  relevance: number; // P(the page deals with the rule's topic)
+  relevant: boolean;
+  score?: number; // 0-100, only when relevant
+  tone: Tone; // grey when not relevant
+  probs?: Record<string, number>; // complies / mostly / unclear / conflicts
+  conflict?: boolean;
+  sections?: string[];
+  error?: string;
+}
+
+export interface FactPassage {
+  docId: string;
+  source: string;
+  text: string;
+}
+
+/** The result of checking one draft page. */
+export interface PageCheck {
+  signature: string;
+  title: string;
+  text: string;
+  at: number;
+  rules: Record<string, RuleCheck>;
+  facts: FactPassage[];
+  model?: string;
+  error?: string;
+  partial?: boolean;
 }
 
 export interface ProjectSummary {

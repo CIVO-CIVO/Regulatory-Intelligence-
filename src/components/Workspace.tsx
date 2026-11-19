@@ -1,13 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { FocusState, KbDocument, Project, ProjectSummary, Quote, Requirement } from '@/lib/types';
+import type { FocusState, KbDocument, PageCheck, Project, ProjectSummary, Quote, Requirement, RuleCheck } from '@/lib/types';
+import { SOURCE_ROLES } from '@/lib/types';
 import { applyFocus, type FocusPlan } from '@/lib/focus';
 import { postJson } from '@/lib/client/api';
 import { countWords } from '@/lib/text';
-import { activePage, nextPageId, pageTexts, signature, totalWords } from '@/lib/pages';
+import { activePage, nextPageId, pageIsStale, signature, totalWords } from '@/lib/pages';
+import { selectFacts } from '@/lib/rules';
 import { extractFile } from '@/lib/client/extract';
-import { streamEvaluate } from '@/lib/client/api';
 import { buildRequirements, classify, initialSteps, readFiles, type Step } from '@/lib/client/build';
 import Sidebar from './Sidebar';
 import CompliancePanel from './CompliancePanel';
@@ -22,10 +23,25 @@ const IDLE_CHECK_MS = 15_000;
 
 export interface CheckState {
   running: boolean;
-  done: number;
-  total: number;
+  pageId?: string;
   error: { code: string; message: string } | null;
 }
+
+/** Only what the check needs travels to the server (no stored answers, no evidence lists). */
+const slimRule = (r: Requirement): Requirement => ({
+  id: r.id,
+  category: r.category,
+  title: r.title,
+  need: r.need,
+  criticality: r.criticality,
+  section: r.section,
+  topic: r.topic,
+  complies: r.complies,
+  conflicts: r.conflicts,
+  quote: { ...r.quote, text: r.quote.text },
+  questions: [],
+  evidence: [],
+});
 
 export default function Workspace({
   project,
@@ -42,7 +58,7 @@ export default function Workspace({
   onNew: () => void;
   onDelete: (id: string) => void;
 }) {
-  const [check, setCheck] = useState<CheckState>({ running: false, done: 0, total: 0, error: null });
+  const [check, setCheck] = useState<CheckState>({ running: false, error: null });
   const [wordsSince, setWordsSince] = useState(0);
   const [doc, setDoc] = useState<{ doc: KbDocument; quote?: Quote } | null>(null);
   const [mobileTab, setMobileTab] = useState<'draft' | 'compliance'>('draft');
@@ -52,27 +68,27 @@ export default function Workspace({
   const [view, setView] = useState<'draft' | 'focus'>('draft');
   const [focusBusy, setFocusBusy] = useState(false);
   const [focusError, setFocusError] = useState<string | null>(null);
+  const [importing, setImporting] = useState<string | null>(null);
+  const [confirmDeletePage, setConfirmDeletePage] = useState(false);
+  const [confirmMovePage, setConfirmMovePage] = useState(false);
 
   const projectRef = useRef(project);
   projectRef.current = project;
-  const running = useRef(false);
-  const again = useRef(false);
-  const abort = useRef<AbortController | null>(null);
   const page = activePage(project);
+  const running = useRef(false);
+  const pending = useRef<Set<string>>(new Set());
+  const abort = useRef<AbortController | null>(null);
   const lastWords = useRef(countWords(page.text));
-  const [importing, setImporting] = useState<string | null>(null);
-  const [confirmDeletePage, setConfirmDeletePage] = useState(false);
-
-  const words = useMemo(() => countWords(page.text), [page.text]);
-  const allWords = useMemo(() => totalWords(project.pages), [project.pages]);
-  const changedSinceCheck = signature(project.pages) !== signature(project.checkedPages);
-
   const disposed = useRef(false);
-  const gen = useRef(0); // bumped when results of an older check must be ignored (rebuild)
+  const gen = useRef(0); // bumped when results of an older check must be ignored (rebuild, focus)
   const rebuilding = useRef(false);
   const idle = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Every update is tagged with this project's id, so a late result can never land in another project.
+  const words = useMemo(() => countWords(page.text), [page.text]);
+  const allWords = useMemo(() => totalWords(project.pages), [project.pages]);
+  const pageCheck = project.pageChecks?.[page.id];
+  const stale = pageIsStale(project, page.id);
+
   // The ref is advanced at once (fn is pure), so a check started right after a change, before React
   // re-renders, already sees it (e.g. a page imported from a file).
   const updateSelf = useCallback(
@@ -83,79 +99,96 @@ export default function Workspace({
     [update, project.id],
   );
 
-  const runCheck = useCallback(async () => {
-    if (disposed.current) return;
-    if (running.current || rebuilding.current) {
-      again.current = true;
-      return;
-    }
-    if (idle.current) clearTimeout(idle.current);
-    const p = projectRef.current;
-    const active = p.requirements.filter((r) => !r.muted);
-    if (p.status !== 'ready' || !active.length) return;
-    const pages = pageTexts(p.pages);
-    setWordsSince(0);
-    if (totalWords(pages) < 3) {
-      updateSelf((x) => ({ ...x, results: {}, checkedPages: pages, lastCheckAt: undefined }));
-      return;
-    }
-    const myGen = gen.current;
-    const current = () => !disposed.current && gen.current === myGen;
-    running.current = true;
-    again.current = false;
-    const ac = new AbortController();
-    abort.current = ac;
-    setCheck({ running: true, done: 0, total: active.length, error: null });
-    let received = 0;
-    let sawDone = false;
-    let error: CheckState['error'] = null;
-    try {
-      await streamEvaluate(
-        { pages, docs: p.documents.map((d) => ({ id: d.id, name: d.name })), requirements: active },
-        (e) => {
-          if (!current()) return;
-          if (e.type === 'result') {
-            received++;
-            updateSelf((x) => ({ ...x, results: { ...x.results, [e.result.reqId]: e.result } }));
-            setCheck((c) => ({ ...c, done: c.done + 1 }));
-          } else if (e.type === 'done') {
-            sawDone = true;
-            error = e.error ?? null;
-          }
-        },
-        ac.signal,
-      );
-      if (!sawDone || received < active.length) {
-        error ??= { code: 'incomplete', message: 'The check was cut off before every requirement was answered. Use "Check now" to try again.' };
-      }
-      // Only a complete check counts as current; otherwise the panel keeps saying the draft changed.
-      if (current() && sawDone && received === active.length) {
-        updateSelf((x) => ({ ...x, checkedPages: pages, lastCheckAt: Date.now() }), true);
-      }
-    } catch (err) {
-      if ((err as Error).name !== 'AbortError') {
-        const e = err as { message: string; code?: string };
-        error = { code: e.code ?? 'error', message: e.message };
-      }
-    } finally {
-      running.current = false;
-      abort.current = null;
-      if (!disposed.current) setCheck((c) => ({ ...c, running: false, error: current() ? error : null }));
-      if (!disposed.current && again.current) {
-        again.current = false;
-        void runCheck();
-      }
-    }
-  }, [updateSelf]);
+  // ------------------------------------------------------------ the check, one page at a time
 
-  // First open: check once if the draft changed since the last completed check.
+  const runCheck = useCallback(
+    async (pageId?: string) => {
+      if (disposed.current) return;
+      const p = projectRef.current;
+      const id = pageId ?? activePage(p).id;
+      if (running.current || rebuilding.current) {
+        pending.current.add(id);
+        return;
+      }
+      if (idle.current) clearTimeout(idle.current);
+      const pg = p.pages.find((x) => x.id === id);
+      const rules = p.requirements.filter((r) => !r.muted);
+      if (!pg || p.status !== 'ready' || !rules.length) return;
+      if (id === activePage(p).id) setWordsSince(0);
+      const sig = signature([pg]);
+      const facts = selectFacts(
+        p.documents.filter((d) => d.role === 'evidence').map((d) => ({ id: d.id, name: d.name, text: d.text })),
+        pg.text,
+      );
+      if (countWords(pg.text) < 3) {
+        const empty: PageCheck = { signature: sig, title: pg.title, text: pg.text, at: Date.now(), rules: {}, facts: [] };
+        updateSelf((x) => ({ ...x, pageChecks: { ...(x.pageChecks ?? {}), [id]: empty } }), true);
+        return;
+      }
+      const myGen = gen.current;
+      const current = () => !disposed.current && gen.current === myGen;
+      running.current = true;
+      const ac = new AbortController();
+      abort.current = ac;
+      setCheck({ running: true, pageId: id, error: null });
+      let error: CheckState['error'] = null;
+      try {
+        const res = await postJson<{ rules: Record<string, RuleCheck>; model?: string; partial: boolean }>(
+          '/api/check-page',
+          {
+            page: { title: pg.title, text: pg.text },
+            rules: rules.map(slimRule),
+            facts,
+            docs: p.documents.map((d) => ({ id: d.id, name: d.name })),
+          },
+          { gzip: true, signal: ac.signal },
+        );
+        if (current()) {
+          const result: PageCheck = { signature: sig, title: pg.title, text: pg.text, at: Date.now(), rules: res.rules, facts, model: res.model, partial: res.partial };
+          updateSelf((x) => ({ ...x, pageChecks: { ...(x.pageChecks ?? {}), [id]: result } }), true);
+          if (res.partial) error = { code: 'partial', message: 'Some Jev answers were missing, so those rules show as not checked. Use "Check now" to try again.' };
+        }
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          const e = err as { message: string; code?: string };
+          error = { code: e.code ?? 'error', message: e.message };
+        }
+      } finally {
+        running.current = false;
+        abort.current = null;
+        if (!disposed.current) setCheck({ running: false, pageId: id, error: current() ? error : null });
+        // Next queued page, the one being edited first.
+        if (!disposed.current && pending.current.size) {
+          const active = activePage(projectRef.current).id;
+          const next = pending.current.has(active) ? active : [...pending.current][0];
+          pending.current.delete(next);
+          void runCheck(next);
+        }
+      }
+    },
+    [updateSelf],
+  );
+
+  const checkAllPages = () => {
+    const p = projectRef.current;
+    const stalePages = p.pages.filter((x) => countWords(x.text) > 2 && pageIsStale(p, x.id)).map((x) => x.id);
+    stalePages.forEach((id) => pending.current.add(id));
+    if (!running.current && stalePages.length) {
+      const first = stalePages[0];
+      pending.current.delete(first);
+      void runCheck(first);
+    }
+  };
+
+  // First open: check the page in view if it changed since its last check.
   useEffect(() => {
     disposed.current = false;
     const p = projectRef.current;
-    if (p.status === 'ready' && totalWords(p.pages) > 0 && signature(p.pages) !== signature(p.checkedPages)) void runCheck();
+    const pg = activePage(p);
+    if (p.status === 'ready' && countWords(pg.text) > 2 && pageIsStale(p, pg.id)) void runCheck(pg.id);
     return () => {
       disposed.current = true;
-      again.current = false;
+      pending.current.clear();
       if (idle.current) clearTimeout(idle.current);
       abort.current?.abort();
     };
@@ -171,24 +204,42 @@ export default function Workspace({
     const since = wordsSince + delta;
     if (idle.current) clearTimeout(idle.current);
     if (pasted || since >= WORDS_PER_CHECK) {
-      // Let React commit the new draft first so the check sends the current text.
       setWordsSince(0);
-      setTimeout(() => void runCheck(), 0);
+      setTimeout(() => void runCheck(pageId), 0);
     } else {
       setWordsSince(since);
       // Small edits that keep the word count (e.g. fixing "12" to "24") are checked after a pause.
       idle.current = setTimeout(() => {
-        const p = projectRef.current;
-        if (signature(p.pages) !== signature(p.checkedPages)) void runCheck();
+        if (pageIsStale(projectRef.current, pageId)) void runCheck(pageId);
       }, IDLE_CHECK_MS);
     }
   };
+
+  /** Replace the checklist (rebuild, focus) and check the page in view again. */
+  const swapChecklist = (patch: Partial<Project>) => {
+    gen.current++;
+    pending.current.clear();
+    abort.current?.abort();
+    updateSelf((x) => ({ ...x, ...patch, pageChecks: {}, results: {}, checkedPages: undefined }), true);
+    setTimeout(() => void runCheck(), 50);
+  };
+
+  /** Project facts changed: page claims must be compared again. */
+  const factsChanged = () => {
+    gen.current++;
+    pending.current.clear();
+    abort.current?.abort();
+    updateSelf((x) => ({ ...x, pageChecks: {} }), true);
+    setTimeout(() => void runCheck(), 50);
+  };
+
+  // ------------------------------------------------------------ rebuild the checklist
 
   const doRebuild = async (newFiles?: File[]) => {
     setRebuild({ steps: initialSteps(), error: null });
     rebuilding.current = true;
     gen.current++;
-    again.current = false;
+    pending.current.clear();
     abort.current?.abort();
     const steps = initialSteps();
     const set = (key: Step['key'], patch: Partial<Step>) => {
@@ -199,6 +250,7 @@ export default function Workspace({
     try {
       let documents = projectRef.current.documents;
       let unread: Project['dropped'] = [];
+      let addedRules = true;
       if (newFiles?.length) {
         set('read', { state: 'running', detail: `0 of ${newFiles.length}` });
         const maxId = Math.max(0, ...documents.map((d) => Number(d.id.slice(1)) || 0));
@@ -209,36 +261,39 @@ export default function Workspace({
         await classify(projectRef.current.description, docs);
         set('sort', { state: 'done' });
         documents = [...documents, ...docs];
+        // New project facts only: no need to rebuild the rules.
+        addedRules = docs.some((d) => d.role && SOURCE_ROLES.includes(d.role)) || projectRef.current.engine !== 2;
       } else {
         set('read', { state: 'done', detail: `${documents.length} files` });
         set('sort', { state: 'done', detail: 'Using the roles you set' });
       }
+      if (!addedRules) {
+        set('rules', { state: 'done', detail: 'The new files are project facts; the rules stay as they are' });
+        set('questions', { state: 'done' });
+        updateSelf((x) => ({ ...x, documents, dropped: [...x.dropped, ...unread] }), true);
+        setRebuild(null);
+        rebuilding.current = false;
+        factsChanged();
+        return;
+      }
       const map = await buildRequirements({ ...projectRef.current, documents }, set);
       const earlierUnread = projectRef.current.dropped.filter((d) => d.reason === 'File could not be read.');
-      // The new checklist is the new base; an existing focus is re-applied to it (ids have changed).
       const focusText = projectRef.current.focus?.text;
       const focused = focusText ? await planFocus(map.requirements, map.categories, focusText).catch(() => null) : null;
-      updateSelf(
-        (x) => ({
-          ...x,
-          documents,
-          baseRequirements: map.requirements,
-          baseCategories: map.categories,
-          requirements: focused?.requirements ?? map.requirements,
-          categories: focused?.categories ?? map.categories,
-          focus: focused?.focus,
-          dropped: [...earlierUnread, ...unread, ...map.dropped],
-          results: {},
-          checkedPages: undefined,
-          lastCheckAt: undefined,
-          status: 'ready',
-        }),
-        true,
-      );
+      rebuilding.current = false;
+      swapChecklist({
+        documents,
+        engine: 2,
+        baseRequirements: map.requirements,
+        baseCategories: map.categories,
+        requirements: focused?.requirements ?? map.requirements,
+        categories: focused?.categories ?? map.categories,
+        focus: focused?.focus,
+        dropped: [...earlierUnread, ...unread, ...map.dropped],
+        status: 'ready',
+      });
       setRolesChanged(false);
       setRebuild(null);
-      rebuilding.current = false;
-      setTimeout(() => void runCheck(), 50);
     } catch (err) {
       rebuilding.current = false;
       setRebuild({ steps: steps.map((s) => ({ ...s })), error: (err as Error).message });
@@ -251,16 +306,21 @@ export default function Workspace({
     const pg = projectRef.current.pages.find((x) => x.id === id);
     if (!pg) return;
     lastWords.current = countWords(pg.text);
+    setWordsSince(0);
     setConfirmDeletePage(false);
+    setConfirmMovePage(false);
     updateSelf((x) => ({ ...x, activePageId: id }));
     setView('draft');
     setMobileTab('draft');
     setSidebarOpen(false);
+    // Each page has its own ratings: check it if it changed since its last check.
+    if (countWords(pg.text) > 2 && pageIsStale(projectRef.current, id)) setTimeout(() => void runCheck(id), 0);
   };
 
   const addPage = () => {
     const id = nextPageId(projectRef.current.pages);
     lastWords.current = 0;
+    setWordsSince(0);
     updateSelf((x) => ({ ...x, pages: [...x.pages, { id, title: 'Untitled page', text: '' }], activePageId: id }), true);
     setView('draft');
     setSidebarOpen(false);
@@ -271,23 +331,22 @@ export default function Workspace({
     setImporting(`Reading ${files.length} file${files.length > 1 ? 's' : ''}…`);
     const failed: string[] = [];
     const added: { id: string; title: string; text: string }[] = [];
-    let ids = projectRef.current.pages;
     for (const f of files) {
       try {
-        const doc = await extractFile(f, 'tmp');
-        const text = doc.text.replace(/\n*\[Page \d+\]\n?/g, '\n\n').trim();
-        const id = nextPageId([...ids, ...added.map((a) => ({ ...a }))]);
+        const d = await extractFile(f, 'tmp');
+        const text = d.text.replace(/\n*\[Page \d+\]\n?/g, '\n\n').trim();
+        const id = nextPageId([...projectRef.current.pages, ...added]);
         added.push({ id, title: f.name.replace(/\.[a-z0-9]+$/i, ''), text });
       } catch (err) {
         failed.push(`${f.name}: ${(err as Error).message}`);
       }
     }
-    ids = [...ids, ...added];
     if (added.length) {
       lastWords.current = countWords(added[0].text);
       updateSelf((x) => ({ ...x, pages: [...x.pages, ...added], activePageId: added[0].id }), true);
       setView('draft');
-      setTimeout(() => void runCheck(), 0);
+      added.slice(1).forEach((a) => pending.current.add(a.id));
+      setTimeout(() => void runCheck(added[0].id), 0);
     }
     setImporting(failed.length ? `Could not read: ${failed.join('; ')}` : null);
     if (failed.length) setTimeout(() => setImporting(null), 8000);
@@ -298,45 +357,60 @@ export default function Workspace({
     updateSelf((x) => ({ ...x, pages: x.pages.map((pg) => (pg.id === id ? { ...pg, title } : pg)) }));
   };
 
-  const deletePage = () => {
+  const removePage = (id: string) => {
     const p = projectRef.current;
-    if (p.pages.length < 2) return;
-    const id = activePage(p).id;
     const idx = p.pages.findIndex((x) => x.id === id);
     const rest = p.pages.filter((x) => x.id !== id);
-    const next = rest[Math.max(0, idx - 1)];
+    const pages = rest.length ? rest : [{ id: nextPageId(p.pages), title: 'Submission draft', text: '' }];
+    const next = pages[Math.max(0, Math.min(idx, pages.length) - 1)] ?? pages[0];
     lastWords.current = countWords(next.text);
-    setConfirmDeletePage(false);
-    updateSelf((x) => ({ ...x, pages: rest, activePageId: next.id }), true);
-    setTimeout(() => void runCheck(), 0);
+    const checks = { ...(p.pageChecks ?? {}) };
+    delete checks[id];
+    updateSelf((x) => ({ ...x, pages, activePageId: next.id, pageChecks: checks }), true);
+    return next;
   };
+
+  const deletePage = () => {
+    if (projectRef.current.pages.length < 2) return;
+    setConfirmDeletePage(false);
+    const next = removePage(activePage(projectRef.current).id);
+    if (pageIsStale(projectRef.current, next.id) && countWords(next.text) > 2) setTimeout(() => void runCheck(next.id), 0);
+  };
+
+  /** A page that holds facts about the project (a dossier, a study summary) belongs in the knowledge base. */
+  const movePageToKnowledgeBase = () => {
+    const p = projectRef.current;
+    const pg = activePage(p);
+    const maxId = Math.max(0, ...p.documents.map((d) => Number(d.id.slice(1)) || 0));
+    const d: KbDocument = {
+      id: `D${maxId + 1}`,
+      name: `${pg.title || 'Untitled page'}.txt`,
+      size: pg.text.length,
+      kind: 'text',
+      text: pg.text,
+      quality: { chars: pg.text.length, lowTextPages: [] },
+      role: 'evidence',
+      title: pg.title,
+      summary: 'Moved from Our draft. Used as project facts: claims on your pages are compared with it.',
+    };
+    setConfirmMovePage(false);
+    updateSelf((x) => ({ ...x, documents: [...x.documents, d] }), true);
+    removePage(pg.id);
+    factsChanged();
+  };
+
+  // ------------------------------------------------------------ focus settings
 
   const planFocus = async (base: Requirement[], baseCategories: string[], text: string) => {
     const p = projectRef.current;
     const res = await postJson<{ plan: FocusPlan; model: string }>(
       '/api/focus',
-      { description: p.description, focus: text, categories: baseCategories, requirements: base },
+      { description: p.description, focus: text, categories: baseCategories, requirements: base.map(slimRule) },
       { gzip: true },
     );
     const applied = applyFocus(base, baseCategories, res.plan);
-    const focus: FocusState = {
-      text,
-      appliedAt: Date.now(),
-      summary: res.plan.summary,
-      notes: res.plan.notes,
-      changes: applied.changes,
-      model: res.model,
-    };
+    const focus: FocusState = { text, appliedAt: Date.now(), summary: res.plan.summary, notes: res.plan.notes, changes: applied.changes, model: res.model };
     return { requirements: applied.requirements, categories: applied.categories, focus };
-  };
-
-  /** Replace the checklist and start a fresh check (old results belong to the old checklist). */
-  const swapChecklist = (patch: Partial<Project>) => {
-    gen.current++;
-    again.current = false;
-    abort.current?.abort();
-    updateSelf((x) => ({ ...x, ...patch, results: {}, checkedPages: undefined, lastCheckAt: undefined }), true);
-    setTimeout(() => void runCheck(), 50);
   };
 
   const applyFocusText = async (text: string) => {
@@ -409,6 +483,7 @@ export default function Workspace({
           onAddPage={addPage}
           onAddPageFiles={(f) => void addPageFiles(f)}
           importing={importing}
+          checkingPageId={check.running ? check.pageId : undefined}
           view={view}
           onView={(v) => {
             setView(v);
@@ -428,62 +503,93 @@ export default function Workspace({
               onBack={() => setView('draft')}
             />
           ) : (
-          <>
-          <div className="flex items-center justify-between gap-4 px-6 pb-3 pt-6 sm:px-9">
-            <input
-              value={page.title}
-              onChange={(e) => renamePage(e.target.value)}
-              onBlur={(e) => !e.target.value.trim() && renamePage('Untitled page')}
-              aria-label="Page title"
-              className="min-w-0 flex-1 rounded-md bg-transparent text-[19px] font-medium text-ink outline-none hover:bg-panel-2 focus:bg-panel-2"
-            />
-            <span className="flex shrink-0 items-center gap-3 text-[15px] tabular-nums text-muted">
-              {words} words
-              {project.pages.length > 1 && <span className="text-[13px] text-faint">{allWords} in all pages</span>}
-            </span>
-          </div>
-          {project.pages.length > 1 && (
-            <div className="-mt-2 flex items-center gap-3 px-6 pb-2 text-[12px] text-faint sm:px-9">
-              <span>
-                Page {project.pages.findIndex((x) => x.id === page.id) + 1} of {project.pages.length}. Jev checks all pages together.
-              </span>
-              {!confirmDeletePage ? (
-                <button type="button" onClick={() => setConfirmDeletePage(true)} className="hover:text-bad-text">
-                  Delete page
-                </button>
-              ) : (
-                <span className="flex items-center gap-2">
-                  Delete this page?
-                  <button type="button" onClick={deletePage} className="text-bad-text hover:underline">
-                    Delete
-                  </button>
-                  <button type="button" onClick={() => setConfirmDeletePage(false)} className="hover:text-ink">
-                    Cancel
-                  </button>
+            <>
+              <div className="flex items-center justify-between gap-4 px-6 pb-3 pt-6 sm:px-9">
+                <input
+                  value={page.title}
+                  onChange={(e) => renamePage(e.target.value)}
+                  onBlur={(e) => !e.target.value.trim() && renamePage('Untitled page')}
+                  aria-label="Page title"
+                  className="min-w-0 flex-1 rounded-md bg-transparent text-[19px] font-medium text-ink outline-none hover:bg-panel-2 focus:bg-panel-2"
+                />
+                <span className="flex shrink-0 items-center gap-3 text-[15px] tabular-nums text-muted">
+                  {words} words
+                  {project.pages.length > 1 && <span className="text-[13px] text-faint">{allWords} in all pages</span>}
                 </span>
-              )}
-            </div>
-          )}
-          <textarea
-            key={page.id}
-            className="draft-area scroll-thin min-h-0 flex-1 resize-none bg-transparent px-6 pb-8 text-[17px] leading-[1.75] text-ink outline-none sm:px-9"
-            value={page.text}
-            spellCheck
-            placeholder={
-              project.status === 'ready'
-                ? 'Start writing here, or paste your draft in.\n\nPut each section under a short heading line (for example "Device description") with a blank line between sections. Jev checks the draft against your requirements every 100 words, and straight away when you paste.'
-                : 'Your checklist is not ready yet.'
-            }
-            onChange={(e) => onDraftInput(e.target.value, (e.nativeEvent as InputEvent).inputType)}
-            aria-label="Submission draft text"
-          />
-          <CheckFooter check={check} wordsSince={wordsSince} hasDraft={allWords > 2} onCheck={() => void runCheck()} lastCheckAt={project.lastCheckAt} changed={changedSinceCheck} />
-          </>
+              </div>
+              <div className="-mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 px-6 pb-2 text-[12px] text-faint sm:px-9">
+                {project.pages.length > 1 && (
+                  <span>
+                    Page {project.pages.findIndex((x) => x.id === page.id) + 1} of {project.pages.length}. Each page has its own ratings.
+                  </span>
+                )}
+                {!confirmMovePage ? (
+                  <button type="button" onClick={() => setConfirmMovePage(true)} className="hover:text-ink" title="For pages that hold facts about your project, such as a dossier or study summary">
+                    Use as project facts
+                  </button>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    Move this page to the knowledge base as project facts?
+                    <button type="button" onClick={movePageToKnowledgeBase} className="text-link hover:underline">
+                      Move
+                    </button>
+                    <button type="button" onClick={() => setConfirmMovePage(false)} className="hover:text-ink">
+                      Cancel
+                    </button>
+                  </span>
+                )}
+                {project.pages.length > 1 &&
+                  (!confirmDeletePage ? (
+                    <button type="button" onClick={() => setConfirmDeletePage(true)} className="hover:text-bad-text">
+                      Delete page
+                    </button>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      Delete this page?
+                      <button type="button" onClick={deletePage} className="text-bad-text hover:underline">
+                        Delete
+                      </button>
+                      <button type="button" onClick={() => setConfirmDeletePage(false)} className="hover:text-ink">
+                        Cancel
+                      </button>
+                    </span>
+                  ))}
+              </div>
+              <textarea
+                key={page.id}
+                className="draft-area scroll-thin min-h-0 flex-1 resize-none bg-transparent px-6 pb-8 text-[17px] leading-[1.75] text-ink outline-none sm:px-9"
+                value={page.text}
+                spellCheck
+                placeholder={
+                  project.status === 'ready'
+                    ? 'Start writing here, or paste your draft in.\n\nJev checks this page against your rules every 100 words, and straight away when you paste. Only the rules this page is about get a rating; everything else stays neutral.'
+                    : 'Your checklist is not ready yet.'
+                }
+                onChange={(e) => onDraftInput(e.target.value, (e.nativeEvent as InputEvent).inputType)}
+                aria-label="Submission draft text"
+              />
+              <CheckFooter
+                check={check}
+                pageId={page.id}
+                wordsSince={wordsSince}
+                hasText={words > 2}
+                onCheck={() => void runCheck(page.id)}
+                checkedAt={pageCheck?.at}
+                changed={stale}
+              />
+            </>
           )}
         </section>
 
         <div className={`min-h-0 lg:block ${mobileTab === 'compliance' ? 'block' : 'hidden'}`}>
-          <CompliancePanel project={project} check={check} hasDraft={allWords > 2} onOpenQuote={openQuote} />
+          <CompliancePanel
+            project={project}
+            page={page}
+            check={check}
+            onOpenQuote={openQuote}
+            onRebuild={() => void doRebuild()}
+            onCheckAll={checkAllPages}
+          />
         </div>
       </div>
 
@@ -493,9 +599,12 @@ export default function Workspace({
           quote={doc.quote}
           onClose={() => setDoc(null)}
           onRoleChange={(role) => {
+            const before = doc.doc.role;
             updateSelf((x) => ({ ...x, documents: x.documents.map((d) => (d.id === doc.doc.id ? { ...d, role } : d)) }), true);
             setDoc((cur) => (cur ? { ...cur, doc: { ...cur.doc, role } } : cur));
-            setRolesChanged(true);
+            const isRule = (r?: string) => !!r && SOURCE_ROLES.includes(r as never);
+            if (isRule(before) || isRule(role)) setRolesChanged(true); // the rules change: rebuild
+            else if (before === 'evidence' || role === 'evidence') factsChanged(); // only the facts change
           }}
         />
       )}
@@ -507,32 +616,36 @@ export default function Workspace({
 
 function CheckFooter({
   check,
+  pageId,
   wordsSince,
-  hasDraft,
+  hasText,
   onCheck,
-  lastCheckAt,
+  checkedAt,
   changed,
 }: {
   check: CheckState;
+  pageId: string;
   wordsSince: number;
-  hasDraft: boolean;
+  hasText: boolean;
   onCheck: () => void;
-  lastCheckAt?: number;
+  checkedAt?: number;
   changed: boolean;
 }) {
   const left = Math.max(0, WORDS_PER_CHECK - wordsSince);
+  const busyHere = check.running && check.pageId === pageId;
+  const failedHere = !check.running && check.error && check.pageId === pageId;
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-6 py-3 text-[13px] text-muted sm:px-9">
       <span className="flex items-center gap-2" aria-live="polite">
-        {check.running ? (
+        {busyHere ? (
           <>
-            <Spinner size={13} /> Jev is checking ({check.done} of {check.total})
+            <Spinner size={13} /> Jev is checking this page
           </>
-        ) : check.error ? (
+        ) : failedHere ? (
           <>
             <IconAlert size={14} className="text-warn-text" /> Last check failed
           </>
-        ) : lastCheckAt ? (
+        ) : checkedAt ? (
           <>
             <IconCheck size={14} className="text-ok-text" /> {changed ? `Next check in ${left} words, on paste or after a pause` : 'Checked'}
           </>
@@ -540,7 +653,7 @@ function CheckFooter({
           <>Checks every {WORDS_PER_CHECK} words and on paste</>
         )}
       </span>
-      <button type="button" onClick={onCheck} disabled={check.running || !hasDraft} className="rounded-md px-2 py-1 text-link hover:bg-raise disabled:opacity-40">
+      <button type="button" onClick={onCheck} disabled={busyHere || !hasText} className="rounded-md px-2 py-1 text-link hover:bg-raise disabled:opacity-40">
         Check now
       </button>
     </div>
@@ -549,14 +662,22 @@ function CheckFooter({
 
 function RebuildOverlay({ steps, error, onClose }: { steps: Step[]; error: string | null; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-40 grid place-items-center bg-black/60 p-4" role="dialog" aria-modal aria-label="Rebuilding requirements">
+    <div className="fixed inset-0 z-40 grid place-items-center bg-black/60 p-4" role="dialog" aria-modal aria-label="Rebuilding the checklist">
       <div className="w-full max-w-md rounded-2xl border border-line bg-panel p-6">
         <h3 className="text-[17px]">Rebuilding the checklist</h3>
         <ol className="mt-5 flex flex-col gap-3">
           {steps.map((s) => (
             <li key={s.key} className="flex items-start gap-3 text-[14px]">
               <span className="mt-0.5 grid size-5 place-items-center">
-                {s.state === 'done' ? <IconCheck size={16} className="text-ok-text" /> : s.state === 'running' && !error ? <Spinner size={14} /> : s.state === 'running' ? <IconAlert size={15} className="text-bad-text" /> : <span className="size-1.5 rounded-full bg-line-strong" />}
+                {s.state === 'done' ? (
+                  <IconCheck size={16} className="text-ok-text" />
+                ) : s.state === 'running' && !error ? (
+                  <Spinner size={14} />
+                ) : s.state === 'running' ? (
+                  <IconAlert size={15} className="text-bad-text" />
+                ) : (
+                  <span className="size-1.5 rounded-full bg-line-strong" />
+                )}
               </span>
               <span>
                 <span className={s.state === 'waiting' ? 'text-faint' : 'text-ink'}>{s.label}</span>

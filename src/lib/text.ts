@@ -286,3 +286,27 @@ export function hash(s: string): string {
   }
   return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36);
 }
+
+/**
+ * Split a very long rule document into parts (at "[Page N]" markers when possible, else at blank
+ * lines) so each part can be read by its own model call, in parallel and well inside time limits.
+ * Offsets map quotes back to the full document.
+ */
+export function splitDocument(text: string, maxChars = 60_000): { text: string; offset: number }[] {
+  if (text.length <= maxChars) return [{ text, offset: 0 }];
+  const parts: { text: string; offset: number }[] = [];
+  let start = 0;
+  while (start < text.length) {
+    let end = Math.min(text.length, start + maxChars);
+    if (end < text.length) {
+      const window = text.slice(start + Math.floor(maxChars * 0.6), end);
+      const page = window.lastIndexOf('\n[Page ');
+      const para = window.lastIndexOf('\n\n');
+      const cut = page >= 0 ? page : para;
+      if (cut >= 0) end = start + Math.floor(maxChars * 0.6) + cut + 1;
+    }
+    parts.push({ text: text.slice(start, end), offset: start });
+    start = end;
+  }
+  return parts;
+}

@@ -53,3 +53,10 @@ export function pageSections(pages: PageText[]): DraftSection[] {
     splitSections(page.text).map((s) => ({ ...s, heading: `${page.title || 'Untitled page'} › ${s.heading || 'Untitled section'}` })),
   );
 }
+
+/** A page needs a (new) check when its title or text changed since its last check. */
+export function pageIsStale(p: Project, pageId: string): boolean {
+  const pg = p.pages.find((x) => x.id === pageId);
+  if (!pg) return false;
+  return signature([pg]) !== p.pageChecks?.[pageId]?.signature;
+}

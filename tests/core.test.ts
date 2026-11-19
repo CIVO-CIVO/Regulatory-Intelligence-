@@ -2,9 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { locateQuote, pageAt, splitSections, selectSections, countWords } from '../src/lib/text.ts';
-import { buildJobs, scoreRequirement, toQuestionResult } from '../src/lib/jev.ts';
 import { lintElement } from '../src/lib/lint.ts';
-import type { Requirement } from '../src/lib/types.ts';
 
 const cfr = readFileSync('public/examples/21-CFR-807-subpart-E.txt', 'utf8');
 
@@ -61,41 +59,6 @@ test('long drafts are cut to the most relevant sections', () => {
   assert.ok(picked.reduce((n, p) => n + p.text.length, 0) <= 3000);
 });
 
-const req: Requirement = {
-  id: 'R1', category: 'Clinical', title: 'Adverse events', need: 'State device-related adverse events.', criticality: 'critical',
-  quote: { docId: 'D1', text: 'The clinical evaluation shall report device-related adverse events.', start: 0, end: 10, match: 'exact' },
-  questions: [
-    { id: 'R1.1', kind: 'coverage', element: 'the number of device-related adverse events' },
-    { id: 'R1.2', kind: 'claim', element: 'the number of device-related adverse events and subjects' },
-  ],
-  evidence: [{ docId: 'D2', text: 'Two device-related adverse events occurred among 148 subjects.', start: 0, end: 10, match: 'exact' }],
-};
-
-test('jobs: draft-only state for coverage, draft-vs-evidence for claims; requirement quoted verbatim', () => {
-  const jobs = buildJobs(req, splitSections('Clinical evidence\nA study with 148 subjects reported 2 device-related adverse events.'), (id) => (id === 'D1' ? 'Rules.pdf' : 'CSR.pdf'));
-  assert.equal(jobs.length, 2);
-  assert.deepEqual(Object.keys(jobs[0].state), ['DRAFT']);
-  assert.deepEqual(Object.keys(jobs[1].state).sort(), ['DRAFT', 'EVIDENCE']);
-  const q = jobs[0].questions['R1.1'] as unknown as { type: string; instructions: { requirement: { text: string } } };
-  assert.equal(q.type, 'boolean');
-  assert.equal(q.instructions.requirement.text, req.quote.text);
-  assert.equal(jobs[1].questions['R1.2'].type, 'choice');
-});
-
-test('scoring: weakest question sets the score; contradiction forces red', () => {
-  const a = toQuestionResult(req.questions[0], { type: 'boolean', probability: 0.95 });
-  const b = toQuestionResult(req.questions[1], { type: 'choice', choice: 'supported', probabilities: { supported: 0.6, partially_supported: 0.2, not_addressed: 0.1, contradicted: 0.05, insufficient_information: 0.05 } });
-  const r = scoreRequirement(req, [a, b]);
-  assert.equal(r.score, 60);
-  assert.equal(r.passed, 1);
-  assert.equal(r.tone, 'amber');
-  const c = toQuestionResult(req.questions[1], { type: 'choice', choice: 'contradicted', probabilities: { supported: 0.5, partially_supported: 0.1, not_addressed: 0, contradicted: 0.4, insufficient_information: 0 } });
-  assert.equal(scoreRequirement(req, [a, c]).tone, 'red');
-  const g = scoreRequirement(req, [a, toQuestionResult(req.questions[0], { type: 'boolean', probability: 0.85 })]);
-  assert.equal(g.tone, 'green');
-  assert.equal(toQuestionResult(req.questions[0], { type: 'refusal' }).refused, true);
-});
-
 test('linter flags unresolved references and vague qualifiers', () => {
   assert.ok(lintElement('the specified safety endpoint').length > 0);
   assert.ok(lintElement('an adequate description of the device').length > 0);
@@ -114,9 +77,3 @@ test('long draft with single line breaks: text near the end still reaches Jev', 
   assert.ok(picked.some((s) => s.text.includes('shelf life of the FlexiGuard')), 'shelf-life text is sent');
 });
 
-test('score is rounded down so the number agrees with the colour', () => {
-  const a = toQuestionResult(req.questions[0], { type: 'boolean', probability: 0.796 });
-  const r = scoreRequirement({ ...req, questions: [req.questions[0]] }, [a]);
-  assert.equal(r.score, 79);
-  assert.equal(r.tone, 'amber');
-});

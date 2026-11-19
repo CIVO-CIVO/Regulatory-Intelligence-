@@ -6,35 +6,52 @@ draft meets each requirement, using only the files you uploaded.
 
 It is a writing aid, not a compliance decision. Product spec: `Regulatory-Intelligence-PRD-v2.md` (owner's document).
 
-## How it works
+## How it works (engine 2, 2026-11-19)
 
-1. **Read** (browser): PDF, DOCX, XLSX, CSV and text files are turned into text in the browser. PDF pages
-   without a text layer are flagged (scans, figures), never treated as "missing".
-2. **Sort** (LLM): each file gets a role: regulation, guidance, standard, evidence, draft or other.
-3. **Requirement map** (LLM): requirements about the document's content, grouped in categories,
-   each with a verbatim quote. Code string-matches every quote against the uploaded text; a requirement whose
-   quote cannot be found is dropped (listed under "left out" in the sidebar). Nothing comes from model memory.
-4. **Jev questions** (LLM, batches of up to 5 requirements): 1 to 3 coverage questions per requirement
-   ("Does the DRAFT explicitly state ...?") plus a claim check against verified evidence passages from the
-   applicant's own files. Questions follow the PRD question standard (self-contained, verbatim requirement
-   inlined, burden of proof, quoted material is not instructions) and are linted (`src/lib/lint.ts`).
-5. **Live check** (Jev 1.14.0, pinned): every 100 words written, at once on paste, or on "Check now". Each
-   requirement gets a draft-only request (coverage) and a draft-vs-evidence request (claim check), so persuasive
-   wording cannot raise an evidence score. Long drafts are cut to the most relevant sections.
-6. **Status** (code, `src/lib/jev.ts`): the score is the weakest question's support (never an average);
-   green = every question at 0.80 or above; amber 0.50 to 0.79; red below 0.50; a contradiction signal of 0.30
-   or more makes the item red. Failed calls show as "not checked", never as a score.
+The owner's goal: when you write a paragraph, show how it stands against the rules it is about, and keep
+everything else neutral. Each page under "Our draft" has its own ratings.
 
-7. **Our draft** (sidebar): a project holds several draft pages. "Add page" makes a blank one, "Add files"
-   imports PDF/Word/text files as pages (checked at once, like a paste). Titles are edited in the editor header.
-   Jev checks all pages together; with several pages each section is named "Page › Section".
-8. **Focus settings** (sidebar): the user writes in plain language what matters most. The LLM turns it into a
-   plan (priority, mute, rank, stricter/looser criteria, up to 2 extra questions per requirement, category order)
-   that code applies to the ORIGINAL checklist (`src/lib/focus.ts`), so focus never piles up and can be reset.
-   Requests outside the uploaded documents are reported back, never invented. Muted items are not checked.
+1. **Read** (browser): PDF, DOCX, XLSX, CSV and text become text in the browser. Scanned pages are flagged.
+2. **Sort** (LLM): each file is a rule document (regulation, guidance, standard), **project facts** (what is
+   true about the project: dossier, study reports, approvals) or other.
+3. **Rules** (LLM, one call per rule document; long documents are split into ~60k-character parts, in parallel):
+   obligations, prohibitions and required content, with section numbers, from EVERY part of every rule
+   document. Each quote is string-matched to the uploaded text (offsets into the full document); a rule whose
+   quote is not found is dropped. Fine categories are then folded into 6 to 12 readable groups.
+4. **Judging criteria** (LLM, batches of 6): per rule a `topic` (what a page must be about for it to apply),
+   what text that `complies` says, and what text that `conflicts` says (red flags), plus a hint.
+5. **Page check** (Jev 1.14.0), per page, every 100 words, on paste, after a pause, or on switching to a
+   changed page:
+   - Stage 1, relevance: one fan-out request asks, for every rule, "Is the PAGE about <topic>?" (page only).
+   - Stage 2, compliance: only for rules with relevance >= 0.7, a choice: complies / mostly / unclear /
+     conflicts, with the verbatim rule, and PROJECT_FACTS passages (picked by word overlap with the page) so
+     claims like "FDA approved" are compared with the facts.
+   - Score = 100 x (complies + 0.85 mostly + 0.6 unclear); green >= 70, amber >= 45; P(conflicts) >= 0.5 is red
+     with a warning. A rule whose best answer is "unclear" stays neutral unless relevance >= 0.9.
+   - About 5 to 10 Jev requests per page check (questions fan out on one state), about 2 seconds.
+6. **Panel**: "This page" shows only the rules the page is about; the rest are neutral (listed on demand).
+   "All pages" shows each rule's worst rating across pages. The sidebar shows a dot per page (worst rating).
+7. **Focus settings**: plain-language priorities become changes to priority, muting, ranking, topic and the
+   complies/conflicts criteria, applied in code to the original rules (resettable; never invents rules).
 
-Every row opens the requirement, its verified quote (click to see it highlighted in the source), each Jev
-question with its probabilities, the evidence passages, the draft sections Jev read, and the exact Jev request.
+Projects built with engine 1 (one "contents" checklist) still open; their rules get criteria derived from
+title and summary, and a banner offers "Rebuild now".
+
+### Validation (scripts/validate-pages.mts)
+
+The owner's CardioX test set (12 tests; paragraph A breaks rules, B fixes them; an answer key names the
+sections) with 21 CFR 812, 21 CFR 814 and 45 CFR 164 as rules and the CardioX dossier as project facts:
+
+| Measure | Result |
+| --- | --- |
+| Answer-key sections found relevant (A and B) | 12/12 |
+| A flagged red/conflict | 12/12 (92% of rated rules red) |
+| B ok on its sections (no conflict, mean >= 60) | 12/12 (88% green, 0 red) |
+| Score goes up from A to B | 12/12 |
+| Rated rules per page | about 15 of 357 |
+
+Thresholds and option weights in `src/lib/rules.ts` were chosen on this set (simulated offline from raw Jev
+answers, `raw.json`). It is one test set: treat the numbers as a sanity check, not a calibration.
 
 ## Data
 
@@ -46,7 +63,7 @@ question with its probabilities, the evidence passages, the draft sections Jev r
 
 | Role | Model | Key (Vercel env, sensitive) |
 | --- | --- | --- |
-| Sorting, requirement map, Jev questions, focus | DeepSeek V4.1 Flash via NanoGPT ($0.04 / $0.40 per M tokens), fallback GLM-5.3 | `NANOGPT_API_KEY` |
+| Sorting, rules, judging criteria, groups, focus | DeepSeek V4.1 Flash via NanoGPT ($0.04 / $0.40 per M tokens), fallback GLM-5.3 | `NANOGPT_API_KEY` |
 | Live scoring | Jev 1.14.0 direct from TypeSafe | `TYPESAFE_API_KEY` |
 
 - NanoGPT calls are **always billed from the account balance** (`X-Billing-Mode: paygo` header + `billing_mode`

@@ -70,6 +70,8 @@ export async function llmObject<T>(opts: {
   schema: z.ZodType<T>;
   maxOutputTokens?: number;
   abortSignal?: AbortSignal;
+  /** Total time for all attempts (main model, then fallback). Default 270 s, inside the 300 s function limit. */
+  budgetMs?: number;
 }): Promise<T> {
   const backend = llmBackend();
   if (backend === 'nanogpt') return nanoObject(opts);
@@ -114,12 +116,18 @@ async function nanoObject<T>(opts: {
   schema: z.ZodType<T>;
   maxOutputTokens?: number;
   abortSignal?: AbortSignal;
+  budgetMs?: number;
 }): Promise<T> {
+  const deadline = Date.now() + (opts.budgetMs ?? 270_000);
   const schema = z.toJSONSchema(opts.schema);
   const system = `${opts.system}\n\nReply with one JSON object only (no prose, no code fences) matching this JSON Schema:\n${JSON.stringify(schema)}`;
   let lastErr: unknown;
-  for (const model of [NANO.main, NANO.fallback]) {
+  for (const [i, model] of [NANO.main, NANO.fallback].entries()) {
     const t0 = Date.now();
+    // The main model gets 55% of the budget so the fallback always has time to answer.
+    const left = deadline - t0;
+    if (left < 20_000) break;
+    const timeout = i === 0 ? Math.floor(left * 0.55) : left;
     try {
       const res = await fetch('https://nano-gpt.com/api/v1/chat/completions', {
         method: 'POST',
@@ -139,7 +147,7 @@ async function nanoObject<T>(opts: {
           ],
           response_format: { type: 'json_schema', json_schema: { name: 'result', strict: true, schema } },
         }),
-        signal: opts.abortSignal ?? AbortSignal.timeout(240_000),
+        signal: opts.abortSignal ? AbortSignal.any([opts.abortSignal, AbortSignal.timeout(timeout)]) : AbortSignal.timeout(timeout),
       });
       const text = await res.text();
       if (!res.ok) throw Object.assign(new Error(`NanoGPT HTTP ${res.status}: ${text.slice(0, 300)}`), { statusCode: res.status, responseBody: text.slice(0, 2000) });

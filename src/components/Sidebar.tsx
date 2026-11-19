@@ -3,7 +3,8 @@
 import { useRef, useState } from 'react';
 import { ROLE_LABEL, SOURCE_ROLES, type DraftPage, type KbDocument, type Project, type ProjectSummary } from '@/lib/types';
 import { ACCEPT } from '@/lib/client/extract';
-import { IconAlert, IconBooks, IconDoc, IconFile, IconFolder, IconPen, IconPlus, IconRefresh, IconSliders, IconX } from './Icons';
+import { IconAlert, IconBooks, IconDoc, IconFile, IconFolder, IconPen, IconPlus, IconRefresh, IconSliders, IconX, Spinner } from './Icons';
+import { pageIsStale } from '@/lib/pages';
 
 export default function Sidebar({
   project,
@@ -23,6 +24,7 @@ export default function Sidebar({
   onAddPage,
   onAddPageFiles,
   importing,
+  checkingPageId,
   view,
   onView,
 }: {
@@ -43,6 +45,7 @@ export default function Sidebar({
   onAddPage: () => void;
   onAddPageFiles: (files: File[]) => void;
   importing: string | null;
+  checkingPageId?: string;
   view: 'draft' | 'focus';
   onView: (v: 'draft' | 'focus') => void;
 }) {
@@ -73,24 +76,38 @@ export default function Sidebar({
           <span>Knowledge base</span>
         </div>
         <ul className="ml-5 flex flex-col">
-          {project.documents.map((d) => {
-            const isRule = d.role && SOURCE_ROLES.includes(d.role);
-            const unreadable = d.quality.lowTextPages.length > 0;
-            return (
-              <li key={d.id}>
-                <button
-                  type="button"
-                  onClick={() => onOpenDoc(d)}
-                  title={`${d.name} (${d.role ? ROLE_LABEL[d.role] : 'unsorted'})`}
-                  className="group flex w-full items-center gap-2 rounded-md py-1.5 pr-1 text-left text-ink-2 hover:text-ink"
-                >
-                  <IconFile size={16} className={`shrink-0 ${isRule ? 'text-ink-2' : 'text-muted'}`} />
-                  <span className="min-w-0 flex-1 truncate">{d.name}</span>
-                  {unreadable && <IconAlert size={13} className="shrink-0 text-warn-text" />}
-                </button>
+          {(
+            [
+              ['Rules', project.documents.filter((d) => d.role && SOURCE_ROLES.includes(d.role))],
+              ['Project facts', project.documents.filter((d) => d.role === 'evidence')],
+              ['Other', project.documents.filter((d) => !d.role || (!SOURCE_ROLES.includes(d.role) && d.role !== 'evidence'))],
+            ] as const
+          ).map(([label, docs]) =>
+            docs.length ? (
+              <li key={label} className="mt-1.5 first:mt-0">
+                <div className="pb-0.5 text-[11.5px] uppercase tracking-wide text-faint">{label}</div>
+                <ul>
+                  {docs.map((d) => {
+                    const unreadable = d.quality.lowTextPages.length > 0;
+                    return (
+                      <li key={d.id}>
+                        <button
+                          type="button"
+                          onClick={() => onOpenDoc(d)}
+                          title={`${d.name} (${d.role ? ROLE_LABEL[d.role] : 'unsorted'})`}
+                          className="group flex w-full items-center gap-2 rounded-md py-1 pr-1 text-left text-ink-2 hover:text-ink"
+                        >
+                          <IconFile size={15} className="shrink-0 text-muted" />
+                          <span className="min-w-0 flex-1 truncate">{d.name}</span>
+                          {unreadable && <IconAlert size={13} className="shrink-0 text-warn-text" />}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               </li>
-            );
-          })}
+            ) : null,
+          )}
           <li>
             <button type="button" onClick={() => fileInput.current?.click()} className="flex items-center gap-2 py-1.5 text-[13px] text-muted hover:text-ink">
               <IconPlus size={14} /> Add files
@@ -131,7 +148,8 @@ export default function Sidebar({
                   className={`flex w-full items-center gap-2 rounded-md py-1.5 text-left ${current ? 'text-ink' : 'text-ink-2 hover:text-ink'}`}
                 >
                   <IconDoc size={16} className="shrink-0" />
-                  <span className={`truncate ${current ? 'font-medium' : ''}`}>{pg.title || 'Untitled page'}</span>
+                  <span className={`min-w-0 flex-1 truncate ${current ? 'font-medium' : ''}`}>{pg.title || 'Untitled page'}</span>
+                  <PageStatus project={project} pageId={pg.id} checking={checkingPageId === pg.id} />
                 </button>
               </li>
             );
@@ -236,5 +254,24 @@ export default function Sidebar({
         </div>
       )}
     </>
+  );
+}
+
+/** Worst rating on a page: red if any rule breaks, amber if any is partial, green if all relevant rules pass. */
+function PageStatus({ project, pageId, checking }: { project: Project; pageId: string; checking: boolean }) {
+  if (checking) return <Spinner size={11} className="shrink-0 text-muted" />;
+  const pc = project.pageChecks?.[pageId];
+  if (!pc) return null;
+  const rel = Object.values(pc.rules).filter((c) => c.relevant && !project.requirements.find((r) => r.id === c.reqId)?.muted);
+  if (!rel.length) return <span className="size-1.5 shrink-0 rounded-full bg-line-strong" title="No rules rated on this page" />;
+  const red = rel.filter((c) => c.tone === 'red').length;
+  const amber = rel.filter((c) => c.tone === 'amber').length;
+  const color = red ? 'bg-bad-text' : amber ? 'bg-warn-text' : 'bg-ok-text';
+  const stale = pageIsStale(project, pageId);
+  return (
+    <span
+      className={`size-2 shrink-0 rounded-full ${color} ${stale ? 'opacity-40' : ''}`}
+      title={`${rel.length} rules rated: ${red} red, ${amber} amber, ${rel.length - red - amber} green${stale ? ' (changed since)' : ''}`}
+    />
   );
 }

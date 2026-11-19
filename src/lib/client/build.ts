@@ -3,6 +3,7 @@ import { extractFile } from './extract';
 import { postJson } from './api';
 import { newId } from './store';
 import { SOURCE_ROLES, type DocRole, type KbDocument, type Project, type Requirement } from '../types';
+import { splitDocument } from '../text';
 
 export type StepState = 'waiting' | 'running' | 'done' | 'error';
 export interface Step {
@@ -15,8 +16,8 @@ export interface Step {
 export const initialSteps = (): Step[] => [
   { key: 'read', label: 'Reading your files', state: 'waiting' },
   { key: 'sort', label: 'Sorting rules from evidence', state: 'waiting' },
-  { key: 'rules', label: 'Finding the requirements in your rule documents', state: 'waiting' },
-  { key: 'questions', label: 'Writing Jev questions for each requirement', state: 'waiting' },
+  { key: 'rules', label: 'Finding the rules in each rule document', state: 'waiting' },
+  { key: 'questions', label: 'Writing how Jev judges each rule', state: 'waiting' },
 ];
 
 type Progress = (steps: Step[]) => void;
@@ -66,89 +67,94 @@ export async function classify(description: string, docs: KbDocument[]): Promise
   }
 }
 
-/** Steps 3 and 4: requirement map from the rule documents, then Jev questions per category. */
+/**
+ * Engine 2. Steps 3 and 4: the rules of every rule document (one call per document, in parallel, so
+ * no regulation is crowded out), folded into a few readable groups; then Jev's judging criteria.
+ */
 export async function buildRequirements(
   project: Pick<Project, 'name' | 'description' | 'documents'>,
   update: (key: Step['key'], patch: Partial<Step>) => void,
-): Promise<Pick<Project, 'categories' | 'requirements' | 'dropped'>> {
+): Promise<Pick<Project, 'categories' | 'requirements' | 'dropped' | 'engine'>> {
   const sources = project.documents.filter((d) => d.role && SOURCE_ROLES.includes(d.role));
-  // Only the applicant's evidence backs claims. An earlier draft is not evidence: comparing the
-  // draft with itself would make persuasive wording look "supported".
-  const evidence = project.documents.filter((d) => d.role === 'evidence');
   if (!sources.length) {
     throw new Error(
       'None of the files looks like a regulation, guidance or standard, so there are no rules to check against. Open the knowledge base, set the role of your rule documents, and rebuild.',
     );
   }
-  update('rules', { state: 'running', detail: `${sources.length} rule document${sources.length > 1 ? 's' : ''}` });
-  const map = await postJson<Pick<Project, 'categories' | 'requirements' | 'dropped'>>(
-    '/api/analyze/requirements',
-    {
-      name: project.name,
-      description: project.description,
-      docs: project.documents.map((d) => ({ id: d.id, name: d.name, role: d.role, title: d.title })),
-      sources: sources.map((d) => ({ id: d.id, name: d.name, text: d.text })),
-    },
-    { gzip: true },
-  );
-  if (!map.requirements.length) throw new Error('No requirements about the document content were found in the rule documents.');
-  update('rules', { state: 'done', detail: `${map.requirements.length} requirements in ${map.categories.length} categories` });
+  const otherDocs = project.documents.filter((d) => !sources.includes(d)).map((d) => `${d.name} (${d.role})`);
+  // Very long documents are split into parts, each read by its own call (parallel, inside time limits).
+  const jobs = sources.flatMap((d, di) => {
+    const parts = splitDocument(d.text);
+    return parts.map((p, pi) => ({ d, di, p, n: pi + 1, of: parts.length }));
+  });
+  update('rules', { state: 'running', detail: `0 of ${jobs.length} parts read` });
+  let docsDone = 0;
+  const dropped: Project['dropped'] = [];
+  const perDoc: Requirement[][] = new Array(jobs.length);
+  const queue = jobs.map((j, i) => ({ ...j, i }));
+  const docWorker = async () => {
+    while (queue.length) {
+      const { d, p, n, of, i } = queue.shift()!;
+      const res = await postJson<{ rules: Requirement[]; dropped: Project['dropped'] }>(
+        '/api/analyze/rules',
+        { name: project.name, description: project.description, doc: { id: d.id, name: d.name, text: p.text }, otherDocs, part: { n, of, offset: p.offset } },
+        { gzip: true },
+      );
+      perDoc[i] = res.rules;
+      dropped.push(...res.dropped);
+      docsDone++;
+      update('rules', { detail: `${docsDone} of ${jobs.length} parts read` });
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(6, jobs.length) }, docWorker));
+  let rules = perDoc.flat();
+  if (!rules.length) throw new Error('No rules were found in the rule documents.');
 
-  // Batches of at most 5 requirements (large categories are split): smaller, faster, sturdier calls.
-  const batches: { category: string; reqs: Requirement[] }[] = [];
-  for (const category of map.categories) {
-    const all = map.requirements.filter((r) => r.category === category);
-    for (let i = 0; i < all.length; i += 5) batches.push({ category, reqs: all.slice(i, i + 5) });
+  const counts: Record<string, number> = {};
+  for (const r of rules) counts[r.category] = (counts[r.category] ?? 0) + 1;
+  let categories = Object.keys(counts);
+  try {
+    const g = await postJson<{ order: string[]; map: Record<string, string> }>('/api/analyze/groups', { counts });
+    rules = rules.map((r) => ({ ...r, category: g.map[r.category] ?? r.category }));
+    categories = g.order.filter((c) => rules.some((r) => r.category === c));
+  } catch {
+    // Grouping is cosmetic: keep the fine categories if it fails.
   }
+  rules = categories.flatMap((c) => rules.filter((r) => r.category === c));
+  rules.forEach((r, i) => (r.id = `R${i + 1}`));
+  update('rules', { state: 'done', detail: `${rules.length} rules in ${categories.length} groups, from ${sources.length} document${sources.length > 1 ? 's' : ''}` });
+
+  const batches: Requirement[][] = [];
+  for (let i = 0; i < rules.length; i += 6) batches.push(rules.slice(i, i + 6));
   update('questions', { state: 'running', detail: `0 of ${batches.length} batches` });
   let done = 0;
-  const fallbacks: string[] = [];
-  const queue = [...batches];
-  const evidencePayload = evidence.map((d) => ({ id: d.id, name: d.name, text: d.text }));
+  let failed = 0;
+  const bq = [...batches];
   const worker = async () => {
-    while (queue.length) {
-      const { category, reqs } = queue.shift()!;
-      const payload = {
-        description: project.description,
-        category,
-        requirements: reqs.map((r) => ({ id: r.id, title: r.title, need: r.need, criticality: r.criticality, quote: r.quote })),
-        evidence: evidencePayload,
-      };
-      type Res = { requirements: Pick<Requirement, 'id' | 'questions' | 'evidence' | 'hint'>[] };
-      let res: Res;
-      try {
-        res = await postJson<Res>('/api/analyze/questions', payload, { gzip: true });
-      } catch (first) {
-        if ((first as { code?: string }).code === 'gateway_card_required') throw first;
+    while (bq.length) {
+      const b = bq.shift()!;
+      type Res = { rules: Pick<Requirement, 'id' | 'topic' | 'complies' | 'conflicts' | 'hint'>[] };
+      let res: Res | null = null;
+      for (let attempt = 0; attempt < 2 && !res; attempt++) {
         try {
-          res = await postJson<Res>('/api/analyze/questions', payload, { gzip: true });
-        } catch {
-          // Keep the build going: these requirements get one plain coverage question each.
-          if (!fallbacks.includes(category)) fallbacks.push(category);
-          res = {
-            requirements: reqs.map((r) => ({
-              id: r.id,
-              questions: [{ id: `${r.id}.1`, kind: 'coverage' as const, element: `this content: ${r.need.replace(/\.$/, '')}` }],
-              evidence: [],
-            })),
-          };
+          res = await postJson<Res>('/api/analyze/criteria', { description: project.description, rules: b }, { gzip: true });
+        } catch (err) {
+          if ((err as { code?: string }).code === 'gateway_card_required') throw err;
         }
       }
-      for (const r of reqs) {
-        const q = res.requirements.find((x) => x.id === r.id);
-        if (q) Object.assign(r, { questions: q.questions, evidence: q.evidence, hint: q.hint });
-      }
+      if (res) {
+        for (const c of res.rules) {
+          const r = rules.find((x) => x.id === c.id);
+          if (r) Object.assign(r, { topic: c.topic, complies: c.complies, conflicts: c.conflicts, hint: c.hint });
+        }
+      } else failed += b.length; // these rules use criteria derived from their title and summary
       done++;
       update('questions', { detail: `${done} of ${batches.length} batches` });
     }
   };
-  await Promise.all(Array.from({ length: Math.min(5, batches.length) }, worker));
-  const nq = map.requirements.reduce((n, r) => n + r.questions.length, 0);
-  update('questions', { state: 'done', detail: `${nq} questions${fallbacks.length ? ` (simple questions used for ${fallbacks.join(', ')})` : ''}` });
-  if (fallbacks.length) {
-    map.dropped = [...map.dropped, ...fallbacks.map((c) => ({ title: c, reason: 'Question writing failed twice, so each requirement here has one simple question.' }))];
-  }
-  return map;
+  await Promise.all(Array.from({ length: Math.min(8, batches.length) }, worker));
+  update('questions', { state: 'done', detail: `${rules.length} rules ready${failed ? ` (${failed} with simpler criteria)` : ''}` });
+  return { categories, requirements: rules, dropped, engine: 2 };
 }
 
 export async function createProject(
