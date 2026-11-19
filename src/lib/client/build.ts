@@ -183,7 +183,8 @@ export async function createProject(
     categories: [],
     requirements: [],
     dropped: failed.map((f) => ({ title: f, reason: 'File could not be read.' })),
-    draft: '',
+    pages: [{ id: 'P1', title: 'Submission draft', text: '' }],
+    activePageId: 'P1',
     results: {},
     engines: engines ? { llm: engines.llm, jev: engines.jev } : undefined,
   };

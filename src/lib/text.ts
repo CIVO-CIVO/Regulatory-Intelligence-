@@ -134,17 +134,34 @@ export interface DraftSection {
   end: number;
 }
 
+const cleanHeading = (t: string) => t.replace(/^#{1,6}\s*/, '').trim();
+
+/** Short line without closing punctuation: may be a heading (decided by what follows it). */
 const looksLikeHeading = (line: string) => {
   const t = line.trim();
-  if (!t || t.length > 90) return false;
+  if (!t || t.length > 90 || !/\p{L}/u.test(t)) return false;
   if (/[.;,]$/.test(t)) return false;
   if (/^#{1,6}\s/.test(t)) return true;
+  if (/:$/.test(t) && countWords(t) > 4) return false; // a lead-in to a list, not a heading
   return countWords(t) <= 10;
 };
 
+/** Unmistakable heading: markdown, numbered ("6.", "2.1", "PART 2."), or ALL CAPS words. */
+const strongHeading = (line: string) => {
+  const t = line.trim();
+  if (!looksLikeHeading(t)) return false;
+  if (/^#{1,6}\s/.test(t)) return true;
+  if (/^(\d+(\.\d+)*\.?|[A-Z]\.|part \d+\.?|section \d+\.?)\s+\p{L}/iu.test(t)) return true;
+  const letters = t.replace(/[^\p{L}]/gu, '');
+  return letters.length >= 4 && letters === letters.toUpperCase() && /\p{Lu}/u.test(letters);
+};
+
 /**
- * Split the draft into sections: blocks separated by blank lines; a short first line without
- * closing punctuation is the heading. A heading alone in its block heads the next block.
+ * Split the draft into sections. A section starts at a heading:
+ * - a line that is clearly a heading (numbered, ALL CAPS, markdown), or
+ * - a short line without closing punctuation that is followed by body text (not by another short line).
+ * Paragraphs without a heading of their own belong to the section above, so documents pasted from
+ * Word (a blank line after every paragraph) and short lists (addresses, symbols) stay together.
  */
 export function splitSections(draft: string): DraftSection[] {
   const blocks: { text: string; start: number; end: number }[] = [];
@@ -152,43 +169,40 @@ export function splitSections(draft: string): DraftSection[] {
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(draft))) {
-    blocks.push({ text: draft.slice(last, m.index), start: last, end: m.index });
+    if (draft.slice(last, m.index).trim()) blocks.push({ text: draft.slice(last, m.index), start: last, end: m.index });
     last = m.index + m[0].length;
   }
-  blocks.push({ text: draft.slice(last), start: last, end: draft.length });
+  if (draft.slice(last).trim()) blocks.push({ text: draft.slice(last), start: last, end: draft.length });
 
+  const lineOnly = (b?: { text: string }) => !!b && b.text.trim().split('\n').length === 1 && looksLikeHeading(b.text);
   const sections: DraftSection[] = [];
-  let pendingHeading: { text: string; start: number } | null = null;
-  for (const b of blocks) {
-    const raw = b.text;
-    if (!raw.trim()) continue;
-    const lines = raw.split('\n');
+  let cur: DraftSection | null = null;
+  blocks.forEach((b, i) => {
+    const lines = b.text.trim().split('\n');
     const first = lines[0];
-    if (lines.length === 1 && looksLikeHeading(first) && !pendingHeading) {
-      pendingHeading = { text: first.replace(/^#{1,6}\s*/, '').trim(), start: b.start };
-      continue;
+    const startsSection =
+      lines.length === 1
+        ? strongHeading(first) || (looksLikeHeading(first) && !!blocks[i + 1] && !lineOnly(blocks[i + 1]))
+        : looksLikeHeading(first) && (strongHeading(first) || !looksLikeHeading(lines[1] ?? ''));
+    if (startsSection) {
+      // An empty heading directly followed by another heading becomes part of it ("Clinical › Overview").
+      if (cur && !cur.text && sections[sections.length - 1] === cur) {
+        sections.pop();
+        cur = { heading: `${cur.heading} › ${cleanHeading(first)}`, text: lines.slice(1).join('\n').trim(), start: cur.start, end: b.end };
+      } else {
+        cur = { heading: cleanHeading(first), text: lines.slice(1).join('\n').trim(), start: b.start, end: b.end };
+      }
+      sections.push(cur);
+      return;
     }
-    let heading = '';
-    let body = raw;
-    if (lines.length > 1 && looksLikeHeading(first)) {
-      heading = first.replace(/^#{1,6}\s*/, '').trim();
-      body = lines.slice(1).join('\n');
+    if (!cur) {
+      cur = { heading: '', text: b.text.trim(), start: b.start, end: b.end };
+      sections.push(cur);
+      return;
     }
-    if (pendingHeading) {
-      if (heading) body = `${heading}\n${body}`;
-      heading = pendingHeading.text;
-    }
-    sections.push({
-      heading,
-      text: body.trim(),
-      start: pendingHeading ? pendingHeading.start : b.start,
-      end: b.end,
-    });
-    pendingHeading = null;
-  }
-  if (pendingHeading) {
-    sections.push({ heading: pendingHeading.text, text: '', start: pendingHeading.start, end: draft.length });
-  }
+    cur.text = cur.text ? `${cur.text}\n\n${b.text.trim()}` : b.text.trim();
+    cur.end = b.end;
+  });
   return sections.flatMap(splitLarge);
 }
 

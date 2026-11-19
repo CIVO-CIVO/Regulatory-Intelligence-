@@ -25,7 +25,10 @@ It is a writing aid, not a compliance decision. Product spec: `Regulatory-Intell
    green = every question at 0.80 or above; amber 0.50 to 0.79; red below 0.50; a contradiction signal of 0.30
    or more makes the item red. Failed calls show as "not checked", never as a score.
 
-7. **Focus settings** (sidebar): the user writes in plain language what matters most. The LLM turns it into a
+7. **Our draft** (sidebar): a project holds several draft pages. "Add page" makes a blank one, "Add files"
+   imports PDF/Word/text files as pages (checked at once, like a paste). Titles are edited in the editor header.
+   Jev checks all pages together; with several pages each section is named "Page › Section".
+8. **Focus settings** (sidebar): the user writes in plain language what matters most. The LLM turns it into a
    plan (priority, mute, rank, stricter/looser criteria, up to 2 extra questions per requirement, category order)
    that code applies to the ORIGINAL checklist (`src/lib/focus.ts`), so focus never piles up and can be reset.
    Requests outside the uploaded documents are reported back, never invented. Muted items are not checked.

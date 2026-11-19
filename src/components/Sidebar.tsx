@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ROLE_LABEL, SOURCE_ROLES, type KbDocument, type Project, type ProjectSummary } from '@/lib/types';
+import { ROLE_LABEL, SOURCE_ROLES, type DraftPage, type KbDocument, type Project, type ProjectSummary } from '@/lib/types';
 import { ACCEPT } from '@/lib/client/extract';
 import { IconAlert, IconBooks, IconDoc, IconFile, IconFolder, IconPen, IconPlus, IconRefresh, IconSliders, IconX } from './Icons';
 
@@ -17,6 +17,12 @@ export default function Sidebar({
   onAddFiles,
   rolesChanged,
   onRebuild,
+  pages,
+  activePageId,
+  onSelectPage,
+  onAddPage,
+  onAddPageFiles,
+  importing,
   view,
   onView,
 }: {
@@ -31,10 +37,17 @@ export default function Sidebar({
   onAddFiles: (files: File[]) => void;
   rolesChanged: boolean;
   onRebuild: () => void;
+  pages: DraftPage[];
+  activePageId: string;
+  onSelectPage: (id: string) => void;
+  onAddPage: () => void;
+  onAddPageFiles: (files: File[]) => void;
+  importing: string | null;
   view: 'draft' | 'focus';
   onView: (v: 'draft' | 'focus') => void;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
+  const pageFileInput = useRef<HTMLInputElement>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const others = projects.filter((p) => p.id !== project.id);
 
@@ -103,17 +116,47 @@ export default function Sidebar({
 
         <div className="mt-5 flex items-center gap-2.5 py-1.5 text-ink-2">
           <IconPen size={16} className="shrink-0" />
-          <span>Writing</span>
+          <span>Our draft</span>
         </div>
-        <button
-          type="button"
-          onClick={() => onView('draft')}
-          aria-current={view === 'draft' ? 'page' : undefined}
-          className={`ml-5 flex items-center gap-2 rounded-md py-1.5 text-left ${view === 'draft' ? 'text-ink' : 'text-ink-2 hover:text-ink'}`}
-        >
-          <IconDoc size={16} className="shrink-0" />
-          <span className="truncate">Submission draft</span>
-        </button>
+        <ul className="ml-5 flex flex-col">
+          {pages.map((pg) => {
+            const current = view === 'draft' && pg.id === activePageId;
+            return (
+              <li key={pg.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelectPage(pg.id)}
+                  aria-current={current ? 'page' : undefined}
+                  title={pg.title}
+                  className={`flex w-full items-center gap-2 rounded-md py-1.5 text-left ${current ? 'text-ink' : 'text-ink-2 hover:text-ink'}`}
+                >
+                  <IconDoc size={16} className="shrink-0" />
+                  <span className={`truncate ${current ? 'font-medium' : ''}`}>{pg.title || 'Untitled page'}</span>
+                </button>
+              </li>
+            );
+          })}
+          <li className="flex flex-wrap gap-x-4">
+            <button type="button" onClick={onAddPage} className="flex items-center gap-2 py-1.5 text-[13px] text-muted hover:text-ink">
+              <IconPlus size={14} /> Add page
+            </button>
+            <button type="button" onClick={() => pageFileInput.current?.click()} className="flex items-center gap-2 py-1.5 text-[13px] text-muted hover:text-ink">
+              <IconPlus size={14} /> Add files
+            </button>
+            <input
+              ref={pageFileInput}
+              type="file"
+              multiple
+              accept={ACCEPT}
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.length) onAddPageFiles(Array.from(e.target.files));
+                e.target.value = '';
+              }}
+            />
+          </li>
+          {importing && <li className="py-1 text-[12px] text-muted">{importing}</li>}
+        </ul>
 
         <button
           type="button"

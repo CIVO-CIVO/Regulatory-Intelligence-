@@ -2,6 +2,7 @@
 // Projects live only in this browser (IndexedDB). Nothing is stored on the server.
 import { createStore, del, get, set } from 'idb-keyval';
 import type { Project, ProjectSummary } from '../types';
+import { migrateProject } from '../pages';
 
 const store = typeof indexedDB !== 'undefined' ? createStore('regulatory-intelligence', 'projects') : undefined;
 const INDEX = 'index';
@@ -13,7 +14,8 @@ export async function listProjects(): Promise<ProjectSummary[]> {
 
 export async function loadProject(id: string): Promise<Project | undefined> {
   if (!store) return undefined;
-  return get<Project>(`p:${id}`, store);
+  const p = await get<Project>(`p:${id}`, store);
+  return p ? migrateProject(p) : undefined;
 }
 
 export async function saveProject(p: Project): Promise<void> {

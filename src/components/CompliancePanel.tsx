@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Project, Quote, Requirement, RequirementResult, Tone } from '@/lib/types';
 import type { CheckState } from './Workspace';
 import { ScoreBar, SummaryBar } from './ScoreBar';
+import { signature } from '@/lib/pages';
 import RequirementDetail from './RequirementDetail';
 import { IconAlert } from './Icons';
 
@@ -64,7 +65,7 @@ export default function CompliancePanel({
     );
   }
 
-  const stale = !check.running && hasDraft && project.lastCheckAt && project.checkedDraft !== project.draft;
+  const stale = !check.running && hasDraft && project.lastCheckAt && signature(project.checkedPages) !== signature(project.pages);
 
   return (
     <section className="scroll-thin flex h-full min-h-0 flex-col overflow-y-auto border-l border-line bg-panel px-6 pb-8 pt-6 sm:px-7" aria-label="Compliance">

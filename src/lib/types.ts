@@ -148,13 +148,28 @@ export interface Project {
   baseCategories?: string[];
   focus?: FocusState;
   dropped: DroppedRequirement[];
-  draft: string;
+  /** The submission is written across one or more pages ("Our draft"). */
+  pages: DraftPage[];
+  activePageId?: string;
+  /** Legacy single-draft field (projects before pages); migrated into pages on load. */
+  draft?: string;
   results: Record<string, RequirementResult>;
   lastCheckAt?: number;
-  /** The draft text as it was at the last completed check (to rebuild the exact Jev requests). */
+  /** The pages as they were at the last completed check (to rebuild the exact Jev requests). */
+  checkedPages?: PageText[];
+  /** Legacy, see checkedPages. */
   checkedDraft?: string;
   /** Which engines produced the analysis (shown in the UI, never hidden). */
   engines?: { llm: string; jev: string };
+}
+
+export interface PageText {
+  title: string;
+  text: string;
+}
+
+export interface DraftPage extends PageText {
+  id: string;
 }
 
 export interface ProjectSummary {

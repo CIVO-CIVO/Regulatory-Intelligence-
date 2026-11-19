@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { PASS_AT, type Project, type QuestionResult, type Quote, type Requirement, type RequirementResult } from '@/lib/types';
 import { buildJobs, CLAIM_OPTIONS } from '@/lib/jev';
-import { splitSections } from '@/lib/text';
+import { pageSections } from '@/lib/pages';
 import { ScoreBar } from './ScoreBar';
 import { IconAlert, IconChevronLeft } from './Icons';
 
@@ -34,15 +34,14 @@ export default function RequirementDetail({
 
   const requests = useMemo(() => {
     if (!showRaw) return null;
-    const draft = project.checkedDraft ?? project.draft;
-    return buildJobs(req, splitSections(draft), docName).map((j) => ({
+    return buildJobs(req, pageSections(project.checkedPages ?? project.pages), docName).map((j) => ({
       model: live?.model ?? 'typesafe-ai/jev-1.14.0',
       profile: j.profile,
       state: j.state,
       questions: j.questions,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showRaw, req, project.checkedDraft]);
+  }, [showRaw, req, project.checkedPages]);
 
   const summary = !live
     ? result?.error

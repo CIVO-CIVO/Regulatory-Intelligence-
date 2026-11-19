@@ -5,6 +5,8 @@ import type { FocusState, KbDocument, Project, ProjectSummary, Quote, Requiremen
 import { applyFocus, type FocusPlan } from '@/lib/focus';
 import { postJson } from '@/lib/client/api';
 import { countWords } from '@/lib/text';
+import { activePage, nextPageId, pageTexts, signature, totalWords } from '@/lib/pages';
+import { extractFile } from '@/lib/client/extract';
 import { streamEvaluate } from '@/lib/client/api';
 import { buildRequirements, classify, initialSteps, readFiles, type Step } from '@/lib/client/build';
 import Sidebar from './Sidebar';
@@ -56,9 +58,14 @@ export default function Workspace({
   const running = useRef(false);
   const again = useRef(false);
   const abort = useRef<AbortController | null>(null);
-  const lastWords = useRef(countWords(project.draft));
+  const page = activePage(project);
+  const lastWords = useRef(countWords(page.text));
+  const [importing, setImporting] = useState<string | null>(null);
+  const [confirmDeletePage, setConfirmDeletePage] = useState(false);
 
-  const words = useMemo(() => countWords(project.draft), [project.draft]);
+  const words = useMemo(() => countWords(page.text), [page.text]);
+  const allWords = useMemo(() => totalWords(project.pages), [project.pages]);
+  const changedSinceCheck = signature(project.pages) !== signature(project.checkedPages);
 
   const disposed = useRef(false);
   const gen = useRef(0); // bumped when results of an older check must be ignored (rebuild)
@@ -66,8 +73,13 @@ export default function Workspace({
   const idle = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Every update is tagged with this project's id, so a late result can never land in another project.
+  // The ref is advanced at once (fn is pure), so a check started right after a change, before React
+  // re-renders, already sees it (e.g. a page imported from a file).
   const updateSelf = useCallback(
-    (fn: (p: Project) => Project, immediate?: boolean) => update(fn, immediate, project.id),
+    (fn: (p: Project) => Project, immediate?: boolean) => {
+      projectRef.current = fn(projectRef.current);
+      update(fn, immediate, project.id);
+    },
     [update, project.id],
   );
 
@@ -81,10 +93,10 @@ export default function Workspace({
     const p = projectRef.current;
     const active = p.requirements.filter((r) => !r.muted);
     if (p.status !== 'ready' || !active.length) return;
-    const draft = p.draft;
+    const pages = pageTexts(p.pages);
     setWordsSince(0);
-    if (countWords(draft) < 3) {
-      updateSelf((x) => ({ ...x, results: {}, checkedDraft: draft, lastCheckAt: undefined }));
+    if (totalWords(pages) < 3) {
+      updateSelf((x) => ({ ...x, results: {}, checkedPages: pages, lastCheckAt: undefined }));
       return;
     }
     const myGen = gen.current;
@@ -99,7 +111,7 @@ export default function Workspace({
     let error: CheckState['error'] = null;
     try {
       await streamEvaluate(
-        { draft, docs: p.documents.map((d) => ({ id: d.id, name: d.name })), requirements: active },
+        { pages, docs: p.documents.map((d) => ({ id: d.id, name: d.name })), requirements: active },
         (e) => {
           if (!current()) return;
           if (e.type === 'result') {
@@ -118,7 +130,7 @@ export default function Workspace({
       }
       // Only a complete check counts as current; otherwise the panel keeps saying the draft changed.
       if (current() && sawDone && received === active.length) {
-        updateSelf((x) => ({ ...x, checkedDraft: draft, lastCheckAt: Date.now() }), true);
+        updateSelf((x) => ({ ...x, checkedPages: pages, lastCheckAt: Date.now() }), true);
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
@@ -140,7 +152,7 @@ export default function Workspace({
   useEffect(() => {
     disposed.current = false;
     const p = projectRef.current;
-    if (p.status === 'ready' && p.draft.trim() && p.draft !== p.checkedDraft) void runCheck();
+    if (p.status === 'ready' && totalWords(p.pages) > 0 && signature(p.pages) !== signature(p.checkedPages)) void runCheck();
     return () => {
       disposed.current = true;
       again.current = false;
@@ -153,7 +165,8 @@ export default function Workspace({
     const n = countWords(value);
     const delta = Math.abs(n - lastWords.current);
     lastWords.current = n;
-    updateSelf((x) => ({ ...x, draft: value }));
+    const pageId = activePage(projectRef.current).id;
+    updateSelf((x) => ({ ...x, pages: x.pages.map((pg) => (pg.id === pageId ? { ...pg, text: value } : pg)) }));
     const pasted = inputType === 'insertFromPaste' || inputType === 'insertFromDrop';
     const since = wordsSince + delta;
     if (idle.current) clearTimeout(idle.current);
@@ -166,7 +179,7 @@ export default function Workspace({
       // Small edits that keep the word count (e.g. fixing "12" to "24") are checked after a pause.
       idle.current = setTimeout(() => {
         const p = projectRef.current;
-        if (p.draft !== p.checkedDraft) void runCheck();
+        if (signature(p.pages) !== signature(p.checkedPages)) void runCheck();
       }, IDLE_CHECK_MS);
     }
   };
@@ -216,7 +229,7 @@ export default function Workspace({
           focus: focused?.focus,
           dropped: [...earlierUnread, ...unread, ...map.dropped],
           results: {},
-          checkedDraft: undefined,
+          checkedPages: undefined,
           lastCheckAt: undefined,
           status: 'ready',
         }),
@@ -230,6 +243,72 @@ export default function Workspace({
       rebuilding.current = false;
       setRebuild({ steps: steps.map((s) => ({ ...s })), error: (err as Error).message });
     }
+  };
+
+  // ------------------------------------------------------------ pages ("Our draft")
+
+  const selectPage = (id: string) => {
+    const pg = projectRef.current.pages.find((x) => x.id === id);
+    if (!pg) return;
+    lastWords.current = countWords(pg.text);
+    setConfirmDeletePage(false);
+    updateSelf((x) => ({ ...x, activePageId: id }));
+    setView('draft');
+    setMobileTab('draft');
+    setSidebarOpen(false);
+  };
+
+  const addPage = () => {
+    const id = nextPageId(projectRef.current.pages);
+    lastWords.current = 0;
+    updateSelf((x) => ({ ...x, pages: [...x.pages, { id, title: 'Untitled page', text: '' }], activePageId: id }), true);
+    setView('draft');
+    setSidebarOpen(false);
+  };
+
+  /** Each imported file becomes its own page; imported text is checked straight away, like a paste. */
+  const addPageFiles = async (files: File[]) => {
+    setImporting(`Reading ${files.length} file${files.length > 1 ? 's' : ''}…`);
+    const failed: string[] = [];
+    const added: { id: string; title: string; text: string }[] = [];
+    let ids = projectRef.current.pages;
+    for (const f of files) {
+      try {
+        const doc = await extractFile(f, 'tmp');
+        const text = doc.text.replace(/\n*\[Page \d+\]\n?/g, '\n\n').trim();
+        const id = nextPageId([...ids, ...added.map((a) => ({ ...a }))]);
+        added.push({ id, title: f.name.replace(/\.[a-z0-9]+$/i, ''), text });
+      } catch (err) {
+        failed.push(`${f.name}: ${(err as Error).message}`);
+      }
+    }
+    ids = [...ids, ...added];
+    if (added.length) {
+      lastWords.current = countWords(added[0].text);
+      updateSelf((x) => ({ ...x, pages: [...x.pages, ...added], activePageId: added[0].id }), true);
+      setView('draft');
+      setTimeout(() => void runCheck(), 0);
+    }
+    setImporting(failed.length ? `Could not read: ${failed.join('; ')}` : null);
+    if (failed.length) setTimeout(() => setImporting(null), 8000);
+  };
+
+  const renamePage = (title: string) => {
+    const id = activePage(projectRef.current).id;
+    updateSelf((x) => ({ ...x, pages: x.pages.map((pg) => (pg.id === id ? { ...pg, title } : pg)) }));
+  };
+
+  const deletePage = () => {
+    const p = projectRef.current;
+    if (p.pages.length < 2) return;
+    const id = activePage(p).id;
+    const idx = p.pages.findIndex((x) => x.id === id);
+    const rest = p.pages.filter((x) => x.id !== id);
+    const next = rest[Math.max(0, idx - 1)];
+    lastWords.current = countWords(next.text);
+    setConfirmDeletePage(false);
+    updateSelf((x) => ({ ...x, pages: rest, activePageId: next.id }), true);
+    setTimeout(() => void runCheck(), 0);
   };
 
   const planFocus = async (base: Requirement[], baseCategories: string[], text: string) => {
@@ -256,7 +335,7 @@ export default function Workspace({
     gen.current++;
     again.current = false;
     abort.current?.abort();
-    updateSelf((x) => ({ ...x, ...patch, results: {}, checkedDraft: undefined, lastCheckAt: undefined }), true);
+    updateSelf((x) => ({ ...x, ...patch, results: {}, checkedPages: undefined, lastCheckAt: undefined }), true);
     setTimeout(() => void runCheck(), 50);
   };
 
@@ -324,6 +403,12 @@ export default function Workspace({
           onAddFiles={(files) => void doRebuild(files)}
           rolesChanged={rolesChanged}
           onRebuild={() => void doRebuild()}
+          pages={project.pages}
+          activePageId={page.id}
+          onSelectPage={selectPage}
+          onAddPage={addPage}
+          onAddPageFiles={(f) => void addPageFiles(f)}
+          importing={importing}
           view={view}
           onView={(v) => {
             setView(v);
@@ -344,13 +429,45 @@ export default function Workspace({
             />
           ) : (
           <>
-          <div className="flex items-baseline justify-between gap-4 px-6 pb-3 pt-6 sm:px-9">
-            <h2 className="text-[19px] font-medium text-ink">Submission draft</h2>
-            <span className="text-[15px] tabular-nums text-muted">{words} words</span>
+          <div className="flex items-center justify-between gap-4 px-6 pb-3 pt-6 sm:px-9">
+            <input
+              value={page.title}
+              onChange={(e) => renamePage(e.target.value)}
+              onBlur={(e) => !e.target.value.trim() && renamePage('Untitled page')}
+              aria-label="Page title"
+              className="min-w-0 flex-1 rounded-md bg-transparent text-[19px] font-medium text-ink outline-none hover:bg-panel-2 focus:bg-panel-2"
+            />
+            <span className="flex shrink-0 items-center gap-3 text-[15px] tabular-nums text-muted">
+              {words} words
+              {project.pages.length > 1 && <span className="text-[13px] text-faint">{allWords} in all pages</span>}
+            </span>
           </div>
+          {project.pages.length > 1 && (
+            <div className="-mt-2 flex items-center gap-3 px-6 pb-2 text-[12px] text-faint sm:px-9">
+              <span>
+                Page {project.pages.findIndex((x) => x.id === page.id) + 1} of {project.pages.length}. Jev checks all pages together.
+              </span>
+              {!confirmDeletePage ? (
+                <button type="button" onClick={() => setConfirmDeletePage(true)} className="hover:text-bad-text">
+                  Delete page
+                </button>
+              ) : (
+                <span className="flex items-center gap-2">
+                  Delete this page?
+                  <button type="button" onClick={deletePage} className="text-bad-text hover:underline">
+                    Delete
+                  </button>
+                  <button type="button" onClick={() => setConfirmDeletePage(false)} className="hover:text-ink">
+                    Cancel
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
           <textarea
+            key={page.id}
             className="draft-area scroll-thin min-h-0 flex-1 resize-none bg-transparent px-6 pb-8 text-[17px] leading-[1.75] text-ink outline-none sm:px-9"
-            value={project.draft}
+            value={page.text}
             spellCheck
             placeholder={
               project.status === 'ready'
@@ -360,13 +477,13 @@ export default function Workspace({
             onChange={(e) => onDraftInput(e.target.value, (e.nativeEvent as InputEvent).inputType)}
             aria-label="Submission draft text"
           />
-          <CheckFooter check={check} wordsSince={wordsSince} hasDraft={words > 2} onCheck={() => void runCheck()} lastCheckAt={project.lastCheckAt} changed={project.draft !== project.checkedDraft} />
+          <CheckFooter check={check} wordsSince={wordsSince} hasDraft={allWords > 2} onCheck={() => void runCheck()} lastCheckAt={project.lastCheckAt} changed={changedSinceCheck} />
           </>
           )}
         </section>
 
         <div className={`min-h-0 lg:block ${mobileTab === 'compliance' ? 'block' : 'hidden'}`}>
-          <CompliancePanel project={project} check={check} hasDraft={words > 2} onOpenQuote={openQuote} />
+          <CompliancePanel project={project} check={check} hasDraft={allWords > 2} onOpenQuote={openQuote} />
         </div>
       </div>
 

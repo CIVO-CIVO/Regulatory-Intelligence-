@@ -98,7 +98,7 @@ export default function Home({
     setSteps(initialSteps());
     try {
       const project = await createProject({ name: name || 'Untitled project', description, files }, setSteps);
-      if (exampleDraft && name === EXAMPLE.name) project.draft = exampleDraft;
+      if (exampleDraft && name === EXAMPLE.name) project.pages = [{ ...project.pages[0], text: exampleDraft }];
       onCreated(project);
     } catch (err) {
       setError((err as Error).message);

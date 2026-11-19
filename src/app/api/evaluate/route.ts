@@ -1,14 +1,16 @@
 import { describeAiError, jevDecide } from '@/lib/server/ai';
 import { errorResponse, HttpError, readJson } from '@/lib/server/http';
 import { buildJobs, scoreRequirement, toQuestionResult, type JevJob } from '@/lib/jev';
-import { splitSections } from '@/lib/text';
-import type { QuestionResult, Requirement } from '@/lib/types';
+import { pageSections } from '@/lib/pages';
+import type { PageText, QuestionResult, Requirement } from '@/lib/types';
 
 export const maxDuration = 120;
 export const dynamic = 'force-dynamic';
 
 interface Body {
-  draft: string;
+  /** All draft pages; legacy clients send one `draft` string. */
+  pages?: PageText[];
+  draft?: string;
   docs: { id: string; name: string }[];
   requirements: Requirement[];
 }
@@ -24,14 +26,16 @@ export async function POST(req: Request) {
   let body: Body;
   try {
     body = await readJson<Body>(req, 8_000_000);
-    if (typeof body.draft !== 'string' || body.draft.length > 600_000) throw new HttpError(413, 'The draft is too long to check in one go.');
+    if (!Array.isArray(body.pages)) body.pages = [{ title: 'Submission draft', text: String(body.draft ?? '') }];
+    const chars = body.pages.reduce((n, x) => n + String(x.text ?? '').length + String(x.title ?? '').length, 0);
+    if (body.pages.length > 100 || chars > 600_000) throw new HttpError(413, 'The draft is too long to check in one go.');
     if (!Array.isArray(body.requirements) || body.requirements.length > 200) throw new HttpError(400, 'Too many requirements.');
   } catch (err) {
     return errorResponse(err);
   }
   const names = new Map(body.docs.map((d) => [d.id, d.name]));
   const docName = (id: string) => names.get(id) ?? id;
-  const sections = splitSections(body.draft);
+  const sections = pageSections(body.pages!.map((x) => ({ title: String(x.title ?? ''), text: String(x.text ?? '') })));
   const jobs: JevJob[] = body.requirements.flatMap((r) => buildJobs(r, sections, docName));
   const pending = new Map<string, number>();
   for (const j of jobs) pending.set(j.reqId, (pending.get(j.reqId) ?? 0) + 1);
