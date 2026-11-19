@@ -1,0 +1,17 @@
+Device description
+The FlexiGuard wound dressing (model FG-200) is made of a silicone contact layer and polyurethane foam. Principle of operation: it absorbs exudate while keeping the wound moist.
+
+Intended use
+Intended use: management of partial-thickness wounds. Indications for use: adults with pressure ulcers and venous leg ulcers. Contraindications: third-degree burns.
+
+Clinical evidence
+A prospective clinical study with 148 subjects reported 2 device-related adverse events through 12 months of follow-up.
+
+Biocompatibility
+Testing per ISO 10993-1 included cytotoxicity and sensitization.
+
+Labeling
+The label includes warnings and instructions for use.
+
+Substantial equivalence
+The predicate device is K123456.

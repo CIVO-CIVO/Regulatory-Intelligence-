@@ -1,0 +1,323 @@
+Electronic Submission Template for Medical Device 510(k) Submissions (FDA, 2023), excerpt. Source: https://www.fda.gov/media/152429/download
+
+Contains Nonbinding Recommendations
+
+Electronic Submission Template for Medical Device 510(k) Submissions
+
+Guidance for Industry and Food and Drug Administration Staff
+
+Document issued on October 2, 2023.
+
+Document originally issued on September 22, 2022.
+
+[Excerpt: Section III (Scope), Section V including Table 1, and the opening paragraph of
+Section VI. Footnote markers are shown as [n]; the footnotes cited in this excerpt are
+reproduced at the end. Table 1 is rendered as a list of "Information Requested" entries,
+each followed by its "Description".]
+
+
+III. Scope
+
+This guidance describes the technical standards associated with preparation of the
+electronic submission template for 510(k)s that enable submission of the 510(k) electronic
+submission solely in electronic format. The electronic submission template includes the
+information and guided prompts FDA believes will best facilitate the collection and assembly
+of the necessary elements of a 'complete' submission, as required by regulation or essential
+to FDA's substantive review of the 510(k) submission. This guidance is not intended to specify
+the user-interface and detailed content of the eSTAR, but instead is limited to establishing
+the 510(k) electronic format and standards for complying with section 745(A)(b)(3) of the
+FD&C Act. FDA intends to implement new versions of eSTAR as relevant policies change. FDA also
+has an ongoing process to collect and consider public comments and stakeholder feedback,
+which is described on FDA's website.[10]
+
+
+V. Current Electronic Submission Template Structure, Format, and Use
+
+The electronic submission template, eSTAR, is the only currently available electronic
+submission template at this time to facilitate the preparation of 510(k) electronic
+submissions. eSTAR consists of a collection of questions, text, logic, and prompts within a
+template that guides a user through construction of a 'complete' 510(k) submission. eSTAR is
+highly automated, includes integrated databases (e.g., FDA product codes,[16] FDA-recognized
+voluntary consensus standards[17]), and includes targeted questions designed to collect
+specific data and information from the submitter. eSTAR also includes applicable links to
+regulations, relevant guidances, and other resources for the submitter's reference. Finally,
+eSTAR is structured to collect and assemble content in the 510(k) submission as an electronic
+submission that closely follows the content of the "SMART" 510(k) review memo template[18]
+used by CDRH reviewers.
+
+Given that an electronic submission properly prepared with an electronic submission template
+should represent a complete submission,[19] eSTAR submissions are not anticipated to undergo a
+refuse to accept (RTA) process. The CDRH Portal will automatically verify that the eSTAR is
+complete, and therefore we do not expect to receive incomplete 510(k) eSTARs. However, FDA
+intends to employ a virus scanning and technical screening process for an eSTAR. A technical
+screening process is a process for verifying that eSTAR responses accurately describe the
+device(s) (e.g., there are, in fact, no tissue contacting components if indicated as such) and
+that there is at least one relevant attachment per each applicable attachment-type question
+(e.g., a Software Description attachment is included in response to the Software Description
+question if software is applicable to the submission). The technical screening process is
+anticipated to occur within 15 days of FDA receiving the 510(k) eSTAR. FDA intends to only
+begin the technical screening for 510(k) electronic submissions where the appropriate user fee
+has been paid. If the eSTAR does not pass technical screening, FDA will notify the submitter
+via email[20] and identify the incomplete information, and the 510(k) will be placed and remain
+on hold until a complete replacement eSTAR is submitted to FDA. If a replacement eSTAR is not
+received within 180 days of the date of technical screening deficiency notification, FDA will
+consider the 510(k) to be withdrawn and the submission will be closed in the system. The
+technical screening review time does not impact the review clock for files that pass the
+technical screening. For a submission that passes technical screening, the review clock starts
+on the day the submission was received by FDA.
+
+
+A. Structure of the current 510(k) Electronic Submission Template
+
+In Table 1 below, is a high-level overview of the structure of the current electronic
+submission template for 510(k)s,[21] including a summary of the anticipated submission content
+provided by the submitter in each section:[22]
+
+Table 1: Structure of the current eSTAR 510(k) Electronic Submission Template
+
+Submission Type
+    Identification of key information that may be useful to FDA in the initial processing and
+    review of the 510(k) submission, including content from current Form FDA 3514, Section
+    A.[23]
+
+Cover Letter / Letters of Reference
+    Attach a cover letter and any documents that refer to other submissions.
+
+Applicant Information
+    Information on the applicant and correspondent, if applicable, consistent with content
+    from current Form FDA 3514, Sections B and C.
+
+Pre-Submission Correspondence & Previous Regulator Interaction
+    Information on prior submissions for the same device included in the current submission,
+    such as submission numbers for a prior not substantially equivalent (NSE) determination,
+    prior deleted or withdrawn 510(k), Q-Submission, Investigational Device Exemption (IDE)
+    application, premarket approval (PMA) application, humanitarian device exemption (HDE)
+    application, or De Novo classification request.
+
+Consensus Standards[24]
+    Identification of voluntary consensus standard(s) used, if applicable. This includes both
+    FDA-recognized and non-recognized consensus standards.
+
+Device Description[25]
+    Identification of listing number if listed with FDA.
+
+    Descriptive information for the device, including a description of the technological
+    characteristics of the device including materials, design, energy source, and other device
+    features, as defined in section 513(i)(1)(B) of the FD&C Act and 21 CFR
+    807.100(b)(2)(ii)(A). Descriptive information also includes a description of the principle
+    of operation for achieving the intended effect and the proposed conditions of use, such as
+    surgical technique for implants; anatomical location of use; user interface; how the device
+    interacts with other devices; and/or how the device interacts with the patient.
+
+    Information on whether the device is intended to be marketed with accessories.
+
+    Identification of any applicable device-specific guidance document(s) or special controls
+    for the device type as provided in a special controls document (or alternative measures
+    identified that provide at least an equivalent assurance of safety and effectiveness) or in
+    a device-specific classification regulation, and/or performance standards. See "The 510(k)
+    Program: Evaluating Substantial Equivalence in Premarket Notifications [510(k)]."[26]
+
+Proposed Indications for Use (Form FDA 3881)[27]
+    Identification of the proposed indications for use of the device. The term indications for
+    use, as defined in 21 CFR 814.20(b)(3)(i), describes the disease or condition the device
+    will diagnose, treat, prevent, cure, or mitigate, including a description of the patient
+    population for which the device is intended.[28]
+
+Classification[29]
+    Identification of the classification regulation number that seems most appropriate for the
+    subject device, as applicable.
+
+Predicates and Substantial Equivalence[30]
+    Identification of a predicate device (e.g., 510(k) number, De Novo number, reclassified PMA
+    number, classification regulation reference, if exempt and limitations to exemption are
+    exceeded, or statement that the predicate is a preamendments device).
+
+    The submission should include a comparison of the predicate and subject device and a
+    discussion why any differences between the subject and predicate do not impact safety and
+    effectiveness [see section 513(i)(1)(A) of the FD&C Act and 21 CFR 807.87(f)]. A reference
+    device should also be included in the discussion, if applicable. See "The 510(k) Program:
+    Evaluating Substantial Equivalence in Premarket Notifications [510(k)]."[31]
+
+Design/Special Controls, Risks to Health, and Mitigation Measures
+    Applicable to Special 510(k) submissions only.
+
+    Identification of the device changes and the risk analysis method(s) used to assess the
+    impact of the change(s) on the device and the results of the analysis.
+
+    Risk control measures to mitigate identified risks (e.g., labeling, verification). See "The
+    Special 510(k) Program."[32]
+
+Labeling[33]
+    Submission of proposed labeling in sufficient detail to satisfy the requirements of 21 CFR
+    807.87(e). Generally, if the device is an in vitro diagnostic device, the labeling must also
+    satisfy the requirements of 21 CFR 809.10. Additionally, the term "labeling" generally
+    includes the device label, instructions for use, and any patient labeling. See "Guidance on
+    Medical Device Patient Labeling."[34]
+
+Reprocessing
+    Information for assessing the reprocessing validation and labeling, if applicable. See
+    "Reprocessing Medical Devices in Health Care Settings: Validation Methods and
+    Labeling."[35]
+
+Sterility
+    Information on sterility and validation methods, if applicable. See "Submission and Review
+    of Sterility Information in Premarket Notification (510(k)) Submissions for Devices Labeled
+    as Sterile."[36]
+
+Shelf Life
+    Summary of methods used to establish that device performance is maintained for the
+    entirety of the proposed shelf-life[37] (e.g., mechanical properties, coating integrity, pH,
+    osmolality), if applicable.
+
+Biocompatibility
+    Information on the biocompatibility assessment of patient contacting materials, if
+    applicable. See "Use of International Standard ISO 10993-1, 'Biological evaluation of
+    medical devices - Part 1: Evaluation and testing within a risk management process.'"[38]
+
+Software/Firmware
+    Submission of applicable software documentation, if applicable. See "Guidance for the
+    Content of Premarket Submissions for Software Contained in Medical Devices."[39]
+
+Cybersecurity/Interoperability
+    Submission of applicable information regarding the assessment of cybersecurity, if
+    applicable. See "Content for Premarket Submissions for Management of Cybersecurity in
+    Medical Devices"[40] and "Design Considerations and Premarket Submission Recommendations for
+    Interoperable Medical Devices."[41]
+
+Electromagnetic Compatibility (EMC), Electrical, Mechanical, Wireless and Thermal Safety
+    Submission of the EMC, Electrical, Mechanical, Wireless and Thermal Safety testing for your
+    device or summarize why testing is not needed. See "Electromagnetic Compatibility (EMC) of
+    Medical Devices"[42] and "Radio Frequency Wireless Technology in Medical Devices."[43]
+
+Performance Testing
+    For non-in vitro diagnostic devices: Provide information on the non-clinical and clinical
+    test reports submitted, referenced, or relied on in the 510(k) for a determination of
+    substantial equivalence. See "Recommended Content and Format of Non-Clinical Bench
+    Performance Testing Information in Premarket Submissions."[44]
+
+    For in vitro diagnostic devices: Provide analytical performance, comparison studies,
+    reference range/expected values, and clinical study information.
+
+References
+    Inclusion of any literature references, if applicable.
+
+Administrative Documentation
+    Inclusion of additional administrative forms applicable to the submission, including but
+    not limited to a general summary of submission/executive summary (recommended), a Truthful
+    and Accuracy Statement,[45] and a 510(k) Summary[46] or statement.[47]
+
+Amendment/Additional Information (AI) response
+    Inclusion of responses to Additional Information requests.[48]
+
+
+VI. Electronic Submission Template Waivers, Exemptions, and Timing
+
+All 510(k) submissions, including original submissions for Traditional, Special, and
+Abbreviated 510(k)s, and subsequent Supplements and Amendments (amendments include add-to-files
+and appeals),[49] and any other subsequent submissions to an original submission unless
+exempted below in Section VI.A of this guidance, are required to be submitted as electronic
+submissions. A 510(k) submission that is not provided as an electronic submission as described
+in Section V above, will not be received unless an exemption from the electronic submission
+requirements or a waiver with respect to that submission applies.
+
+[End of excerpt from the body of the guidance.]
+
+
+Footnotes cited in this excerpt
+
+10 See FDA's website on the eSTAR program at
+https://www.fda.gov/medical-devices/how-study-and-market-your-device/voluntary-estar-program.
+
+16 https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfPCD/PCDSimpleSearch.cfm.
+
+17 https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfStandards/search.cfm.
+
+18 For more information on the "SMART" 510(k) review memo template, please see "FDA Has Taken
+Steps to Strengthen The 510(k) Program" available at https://www.fda.gov/media/118500/download
+or "Improve 510(k) Submission Quality" available at
+https://www.accessdata.fda.gov/scripts/fdatrack/view/track_project.cfm?program=cdrh&id=CDRH-ODE-Improve-510k-Submission-Quality.
+
+19 After a submitter completes all necessary sections in their eSTAR file correctly, the status
+message at the top of the PDF will indicate "eSTAR Complete" to represent a complete
+submission.
+
+20 For additional information about email communications with CBER, please see the "SOPP 8119:
+Use of Email for Regulatory Communications," available at
+https://www.fda.gov/media/108992/download.
+
+21 As indicated above, FDA intends to employ a technical screening process to verify that
+electronic submission template responses accurately describe the device.
+
+22 Throughout completion of the eSTAR, submitters can add attachments as unstructured data,
+including but not limited to documents, PDFs, images, and videos that the submitter believes
+are pertinent to the review of their device. In addition, eSTAR will prompt for any documents
+that are needed. For example, when the use of clinical testing to support the submission is
+affirmatively indicated, eSTAR will automatically prompt for the attachment of clinical testing
+documents and any applicable financial certifications or disclosure statements. These
+attachments appear within the applicable bookmark of the eSTAR PDF when viewed by the submitter
+or FDA.
+
+23 https://www.fda.gov/media/72421/download.
+
+24 https://www.fda.gov/medical-devices/device-advice-comprehensive-regulatory-assistance/standards-and-conformity-assessment-program.
+
+25 FDA's regulations require manufacturers to include in their 510(k)s "[a] description of the
+device that is the subject of the premarket notification submission, such as might be found in
+the labeling or promotional material for the device, including an explanation of how the
+device functions, the scientific concepts that form the basis for the device, and the
+significant physical and performance characteristics of the device, such as device design,
+material used, and physical properties." 21 CFR 807.92(a)(4); see also 21 CFR 807.87(f).
+
+26 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/510k-program-evaluating-substantial-equivalence-premarket-notifications-510k.
+
+27 https://www.fda.gov/media/124401/download.
+
+28 We have a long-standing policy of applying the definition of indications for use in the PMA
+regulation at 21 CFR 814.20(b)(3)(i) in the same way in the 510(k) context.
+
+29 21 CFR 807.87(c).
+
+30 21 CFR 807.87(f) and FD&C Act section 513(i)(1)(A).
+
+31 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/510k-program-evaluating-substantial-equivalence-premarket-notifications-510k.
+
+32 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/special-510k-program.
+
+33 21 CFR 807.87(e).
+
+34 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/guidance-medical-device-patient-labeling.
+
+35 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/reprocessing-medical-devices-health-care-settings-validation-methods-and-labeling.
+
+36 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/submission-and-review-sterility-information-premarket-notification-510k-submissions-devices-labeled.
+
+37 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/shelf-life-medical-devices.
+
+38 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/use-international-standard-iso-10993-1-biological-evaluation-medical-devices-part-1-evaluation-and.
+
+39 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/guidance-content-premarket-submissions-software-contained-medical-devices.
+
+40 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/content-premarket-submissions-management-cybersecurity-medical-devices-0.
+
+41 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/design-considerations-and-pre-market-submission-recommendations-interoperable-medical-devices.
+
+42 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/information-support-claim-electromagnetic-compatibility-emc-electrically-powered-medical-devices.
+
+43 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/radio-frequency-wireless-technology-medical-devices-guidance-industry-and-fda-staff.
+
+44 https://www.fda.gov/regulatory-information/search-fda-guidance-documents/recommended-content-and-format-non-clinical-bench-performance-testing-information-premarket.
+
+45 21 CFR 807.87(l).
+
+46 21 CFR 807.92.
+
+47 21 CFR 807.93.
+
+48 While the responses to FDA additional information requests are included in this section,
+submitters should include the actual changes to the information to be reviewed by FDA in the
+respective section of eSTAR (e.g., updated draft labeling should be included in the Labeling
+section).
+
+49 References to supplements and amendments are generally meant to capture the various
+submission types that typically occur in association with a 510(k) file that is undergoing
+review or has received a final decision.

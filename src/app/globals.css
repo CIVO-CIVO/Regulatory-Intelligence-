@@ -1,0 +1,121 @@
+@import 'tailwindcss';
+
+:root {
+  --bg: #121212;
+  --panel: #1b1b1b;
+  --panel-2: #202020;
+  --raise: #262626;
+  --border: #2d2d2d;
+  --border-strong: #3a3a3a;
+  --text: #ececec;
+  --text-2: #c9c9c9;
+  --muted: #8f8f8f;
+  --faint: #6b6b6b;
+  --track: #2a2a2a;
+  --green: #2f6b2f;
+  --green-text: #63b863;
+  --amber: #9c7a30;
+  --amber-text: #d6aa4c;
+  --red: #843838;
+  --red-text: #e07a7a;
+  --blue: #6fa8ff;
+  --focus: #8ab4ff;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-raise: var(--raise);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--text);
+  --color-ink-2: var(--text-2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-track: var(--track);
+  --color-ok: var(--green);
+  --color-ok-text: var(--green-text);
+  --color-warn: var(--amber);
+  --color-warn-text: var(--amber-text);
+  --color-bad: var(--red);
+  --color-bad-text: var(--red-text);
+  --color-link: var(--blue);
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: #3d4f6b;
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3a transparent;
+}
+
+.draft-area {
+  caret-color: var(--text);
+}
+.draft-area::placeholder {
+  color: var(--faint);
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 1.1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+mark.quote-hit {
+  background: #4a3d16;
+  color: var(--text);
+  border-radius: 3px;
+  padding: 1px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot,
+  .spin {
+    animation: none;
+  }
+  * {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,120 @@
+FICTIONAL EXAMPLE DOCUMENT FOR SOFTWARE DEMONSTRATION. Northbay Medical AS is an invented company.
+
+NORTHBAY MEDICAL AS, QUALITY ASSURANCE
+INTERNAL SUMMARY: BIOLOGICAL EVALUATION OF MEDICAL DEVICES (ISO 10993-1)
+
+Document ID: NBM-QA-SUM-010
+Version: 2.0
+Date: 10 February 2026
+Prepared by: Northbay Medical QA, biocompatibility lead
+Reviewed by: Regulatory Affairs
+Approved by: Head of Quality
+Status: Effective
+
+Important: This is an internal working summary written by Northbay Medical QA in our own words. It is not a copy or substitute for ISO 10993-1, Biological evaluation of medical devices, Part 1: Evaluation and testing within a risk management process. The licensed copy of the standard (edition as listed in the Northbay standards register, SR-004) remains the authoritative source. Where this summary and the standard differ, the standard applies.
+
+
+1. PURPOSE AND SCOPE
+
+1.1 This summary sets out the internal rules Northbay Medical applies when planning and documenting the biological evaluation of its products.
+
+1.2 It applies to all Northbay products that contact patients. Sections 4 to 6 focus on the device category relevant to our wound care range: surface devices in contact with breached or compromised skin for a prolonged duration (more than 24 hours and up to 30 days).
+
+1.3 Annex A records how these rules apply to the FlexiGuard FG-200 wound dressing.
+
+
+2. GENERAL PRINCIPLES
+
+2.1 Biological evaluation shall be planned and performed as part of the risk management process under ISO 14971 (procedure NBM-SOP-RM-001). Biological hazards shall be entered in the product risk management file.
+
+2.2 The biological evaluation shall start from what is already known: material composition, manufacturing process and residues, clinical history of the same materials in the same type of contact, and existing test data. Testing is one way to answer a question; it is not the starting point.
+
+2.3 Animal testing shall only be performed when the question cannot be answered by chemical characterization, in vitro methods or existing data. The rationale for any animal study shall be documented.
+
+2.4 The evaluation shall cover the device as it reaches the patient. Testing shall therefore be performed on the final finished device, after all manufacturing steps, packaging and sterilization (for FG-200: ethylene oxide). If a representative sample is used instead (for example a coupon of the same laminate), the biological evaluation plan shall justify why it is equivalent to the final finished, sterilized device.
+
+2.5 The biological evaluation shall consider whether ageing can change the materials. Where the shelf life is more than 12 months, the plan shall state whether testing on aged product, or a chemical comparison of aged and fresh product, is needed.
+
+
+3. DOCUMENTATION REQUIREMENTS
+
+3.1 A biological evaluation plan (BEP) shall be approved before any biological testing is ordered. The BEP shall contain at least:
+(a) device description, materials of every patient-contacting component and their suppliers;
+(b) the device categorization (nature of contact and contact duration) with rationale;
+(c) the list of biological endpoints to be addressed and, for each, whether it will be addressed by testing, by chemical characterization with toxicological risk assessment, or by a documented rationale;
+(d) the test methods, sample preparation and extraction conditions (per ISO 10993-12), and the selected laboratory;
+(e) the acceptance criteria for each test.
+
+3.2 A biological evaluation report (BER) shall be issued after testing. The BER shall summarize all results, state for every endpoint in the BEP how it was addressed, and give an overall conclusion on biological safety signed by a qualified evaluator.
+
+3.3 Test laboratories shall be ISO/IEC 17025 accredited for the methods used. For studies supporting a US FDA submission, non-clinical laboratory studies shall be conducted in compliance with 21 CFR Part 58 (Good Laboratory Practice), or the BER shall explain any deviation.
+
+3.4 The BEP and BER shall be referenced from the design history file and from the risk management file, and summarized in regulatory submissions.
+
+3.5 The biological evaluation shall be repeated, or a documented gap assessment performed, whenever any of the following changes: a patient-contacting material or its supplier; the manufacturing process or processing aids; the sterilization method or cycle; the packaging; the intended use or contact duration; or when post-market data show a new biological risk.
+
+
+4. DEVICE CATEGORIZATION
+
+4.1 Nature of contact. A dressing applied to an open wound shall be categorized as a surface device in contact with breached or compromised skin, not as a device in contact with intact skin, even though part of the dressing also touches intact periwound skin.
+
+4.2 Contact duration. Contact duration shall be categorized as limited (up to 24 hours), prolonged (more than 24 hours up to 30 days) or long-term (more than 30 days).
+
+4.3 Repeated use. Where successive devices of the same type are applied to the same patient, the duration category shall be based on the total cumulative contact, not on the wear time of a single device. If the intended clinical use can exceed 30 days in total, the BEP shall either justify a prolonged categorization in writing or add the long-term endpoints listed in 5.3.
+
+
+5. ENDPOINTS TO BE ADDRESSED: SURFACE DEVICE, BREACHED OR COMPROMISED SKIN, PROLONGED CONTACT
+
+5.1 The following endpoints shall be addressed by testing on the final finished, sterilized device unless the BEP documents a valid alternative:
+(a) Cytotoxicity (ISO 10993-5). An in vitro test, for example extract elution, shall be performed.
+(b) Sensitization (ISO 10993-10). A sensitization test shall be performed with polar and non-polar extracts. Adhesive and silicone components need particular attention.
+(c) Irritation or intracutaneous reactivity (ISO 10993-23). An irritation test, normally intracutaneous reactivity for a wound contact device, shall be performed.
+
+5.2 The following endpoints shall also be addressed in the BER. They may be addressed by testing, or by chemical characterization (ISO 10993-18) with a toxicological risk assessment (ISO 10993-17), or by a documented rationale based on material history:
+(a) Acute systemic toxicity (ISO 10993-11).
+(b) Material-mediated pyrogenicity (ISO 10993-11, with a pyrogen test where chemicals of concern cannot be ruled out).
+(c) Subacute or subchronic toxicity (ISO 10993-11), because the contact is repeated or continuous for more than 24 hours on a breached surface.
+(d) Genotoxicity. The BEP shall state whether genotoxicity needs to be addressed, taking into account the chemistry of the materials, any extractables of concern and the cumulative contact duration. For a prolonged contact wound dressing a documented rationale is normally expected even when no test is performed.
+(e) Implantation. Not normally relevant for a surface dressing. Shall be considered only if fragments or material can remain in the wound, for example from a foam that sheds particles.
+
+5.3 Additional endpoints when cumulative contact is long-term (see 4.3): chronic toxicity, genotoxicity testing, implantation and carcinogenicity shall be considered and addressed in the BER.
+
+5.4 Ethylene oxide residuals. For any device sterilized with ethylene oxide, residual ethylene oxide and ethylene chlorohydrin shall be measured on the final product and shown to be within the limits of ISO 10993-7 for the relevant exposure category.
+
+5.5 For US submissions, QA shall also check the current FDA guidance on the use of ISO 10993-1, since FDA may expect endpoints in addition to those listed in the standard for a given device category. Any difference shall be recorded in the BEP.
+
+
+6. ACCEPTANCE AND REPORTING RULES
+
+6.1 Each test report shall state the test article identification (product code, lot, sterilization lot), the extraction conditions, controls used and the result against the acceptance criterion.
+
+6.2 A failing or borderline result shall be raised as a nonconformity and shall be assessed in the risk management file before any regulatory submission.
+
+6.3 Regulatory submissions shall list every endpoint from the BEP with its outcome. Listing only some endpoints (for example only cytotoxicity and sensitization) is not acceptable, because the reviewer cannot see how the remaining endpoints were addressed.
+
+
+ANNEX A. APPLICATION TO FLEXIGUARD FG-200
+
+A.1 Device: FlexiGuard FG-200 wound dressing (FG-200-05, FG-200-10, FG-200-15). Patient-contacting materials: perforated silicone wound contact layer (including silicone adhesive), polyurethane foam, polyurethane film backing. Sterilized by ethylene oxide. Shelf life 3 years.
+
+A.2 Categorization: surface device, breached or compromised skin, prolonged contact. Single dressing wear time up to 7 days. Clinical use in study NB-FG-2024-01 was up to 12 weeks of successive dressings; the cumulative-contact rationale required by 4.3 is documented in BEP NBM-BEP-FG200-001 v1.2, section 4.
+
+A.3 Status of endpoints (BER NBM-BER-FG200-001 v1.0, 9 December 2025):
+Cytotoxicity, ISO 10993-5, MEM elution: grade 1, pass.
+Sensitization, ISO 10993-10, guinea pig maximization, polar and non-polar extracts: 0 of 10 animals sensitized, pass.
+Irritation, ISO 10993-23, intracutaneous reactivity: pass.
+Acute systemic toxicity, ISO 10993-11: pass.
+Material-mediated pyrogenicity, rabbit pyrogen test: pass.
+Subacute toxicity: addressed by chemical characterization (ISO 10993-18) and toxicological risk assessment (ISO 10993-17); all margins of safety above 1.
+Genotoxicity: addressed by rationale and chemical characterization; no extractables of genotoxic concern identified.
+Implantation: not applicable; no particle shedding in bench test NBM-TR-FG200-014.
+EO residuals, ISO 10993-7: within limits for prolonged exposure.
+Testing on aged product: chemical comparison of 3-year real-time aged and fresh product scheduled; accelerated-aged product (equivalent to 3 years) showed no new extractables.
+
+A.4 Testing was performed on final finished, EO-sterilized FG-200-10 dressings from production-equivalent lots 23K041 and 23K057.
+
+
+DOCUMENT HISTORY
+
+Version 1.0, 14 March 2023: first issue.
+Version 2.0, 10 February 2026: added rule 4.3 on cumulative contact, rule 5.5 on FDA expectations, rule 6.3 on complete endpoint reporting, and Annex A.

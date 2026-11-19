@@ -1,0 +1,205 @@
+FICTIONAL EXAMPLE DOCUMENT FOR SOFTWARE DEMONSTRATION. Northbay Medical AS, FlexiGuard and all study data below are invented. Not a real clinical study.
+
+CLINICAL INVESTIGATION REPORT
+
+Study title: A prospective, multicentre, single-arm clinical investigation of the FlexiGuard FG-200 silicone foam wound dressing in adults with category 2 pressure ulcers or venous leg ulcers
+Study ID: NB-FG-2024-01
+Investigational device: FlexiGuard wound dressing, model FG-200 (variants FG-200-05, FG-200-10, FG-200-15)
+Sponsor: Northbay Medical AS, Sjøgata 21, 8006 Bodø, Norway
+Report document ID: NBM-CIR-FG200-001
+Report version: 3.0 (final)
+Report date: 15 April 2026
+Clinical investigation plan: NBM-CIP-FG200-001, version 2.0 (12 February 2024)
+Standard applied: ISO 14155:2020, Clinical investigation of medical devices for human subjects, Good clinical practice
+Confidentiality: Northbay Medical AS confidential
+
+
+1. SYNOPSIS
+
+1.1 Design. Prospective, open-label, single-arm, multicentre clinical investigation at 3 sites in Norway.
+
+1.2 Population. 148 adults aged 18 to 85 years were enrolled and treated: 79 with a category 2 pressure ulcer and 69 with a venous leg ulcer.
+
+1.3 Treatment. FlexiGuard FG-200 applied as the primary dressing until complete wound closure or for a maximum of 12 weeks, followed by off-treatment follow-up visits at 6 and 12 months after enrolment.
+
+1.4 Primary effectiveness result. Complete wound closure at 12 weeks was achieved by 91 of 148 subjects (61.5%; 95% CI 53.1% to 69.4%). The lower confidence bound exceeded the prespecified performance goal of 45%.
+
+1.5 Safety result. 63 adverse events were reported in 41 subjects (27.7%). Exactly 2 adverse events in 2 subjects (1.4%; 95% CI 0.2% to 4.8%) were assessed as device-related: one periwound maceration and one allergic contact dermatitis. Both were non-serious and resolved. No device-related serious adverse events and no unanticipated serious adverse device effects occurred through 12 months of follow-up.
+
+1.6 Follow-up. 11 subjects were lost to follow-up over the 12-month study period.
+
+
+2. ABBREVIATIONS
+
+ABPI: ankle-brachial pressure index
+AE: adverse event
+ADE: adverse device effect
+CI: confidence interval
+CIP: clinical investigation plan
+EO: ethylene oxide
+ITT: intention-to-treat
+NRS: numeric rating scale (0 to 10)
+PP: per-protocol
+PU: pressure ulcer
+REK: Regional Committee for Medical and Health Research Ethics (Norway)
+SAE: serious adverse event
+SD: standard deviation
+USADE: unanticipated serious adverse device effect
+VLU: venous leg ulcer
+
+
+3. INTRODUCTION
+
+3.1 Chronic wounds such as pressure ulcers and venous leg ulcers produce moderate to heavy exudate. Excess exudate can macerate the periwound skin, while a dry wound bed slows re-epithelialization. Dressings for these wounds are therefore expected to absorb exudate while keeping the wound bed moist, and to be removed without trauma to newly formed tissue.
+
+3.2 FlexiGuard FG-200 was developed by Northbay Medical AS for the management of partial-thickness wounds. This investigation was designed to provide clinical performance and safety data for the device in its intended population, to support marketing applications including a US premarket notification (510(k)).
+
+
+4. INVESTIGATIONAL DEVICE
+
+4.1 Description. FlexiGuard FG-200 is a sterile, single-use, three-layer dressing consisting of (a) a perforated soft silicone wound contact layer, (b) an absorbent hydrophilic polyurethane foam core, and (c) a vapour-permeable polyurethane film backing. The silicone layer adheres gently to intact periwound skin but not to the moist wound bed. The foam absorbs exudate vertically and the film backing allows moisture vapour transmission, which maintains a moist wound environment. The device contains no drugs, biologics or antimicrobial agents.
+
+4.2 Variants used. All three sizes were available to sites: FG-200-05 (5 x 5 cm), FG-200-10 (10 x 10 cm) and FG-200-15 (15 x 15 cm). Investigators selected the size so that the foam pad overlapped the wound margin by at least 2 cm on all sides. Use by size (first application): FG-200-05, 31 subjects; FG-200-10, 84 subjects; FG-200-15, 33 subjects.
+
+4.3 Sterilization and lots. Devices were ethylene oxide sterilized and supplied in individual peel pouches. Four production-equivalent lots were used (lot numbers 23K041, 23K057, 24B012 and 24B019), all within their labeled expiry date at the time of use.
+
+4.4 Accountability. 2,480 dressings were dispensed to sites and 2,461 were used or returned and reconciled. The 19 unreconciled units were documented as discarded at site (damaged outer carton or dropped before opening).
+
+
+5. OBJECTIVES AND ENDPOINTS
+
+5.1 Primary objective. To evaluate the effectiveness of FG-200 in achieving complete wound closure in subjects with category 2 pressure ulcers or venous leg ulcers.
+
+5.2 Primary endpoint. Proportion of subjects with complete wound closure at 12 weeks. Complete closure was defined as 100% re-epithelialization of the wound without drainage and without need for a dressing, first observed by week 12 and confirmed at a second visit 2 weeks later.
+
+5.3 Secondary endpoints.
+(a) Time to complete wound closure (Kaplan-Meier).
+(b) Percentage reduction in wound area at week 4, measured by digital planimetry.
+(c) Pain at dressing removal (NRS 0 to 10), recorded at each dressing change.
+(d) Periwound skin condition (maceration, erythema, stripping) at each visit.
+(e) Mean dressing wear time in days.
+(f) Wound recurrence at 12 months in subjects whose wounds closed.
+
+5.4 Safety endpoints. Incidence, severity, seriousness and device relationship of all AEs and ADEs through 12 months; device deficiencies.
+
+
+6. INVESTIGATIONAL PLAN
+
+6.1 Design and sites. Prospective, open-label, single-arm investigation conducted at 3 Norwegian sites:
+Site 01: hospital outpatient wound clinic, western Norway (52 subjects)
+Site 02: hospital outpatient wound clinic, central Norway (51 subjects)
+Site 03: municipal wound care centre, northern Norway (45 subjects)
+
+6.2 Key inclusion criteria.
+(a) Age 18 to 85 years.
+(b) Category 2 pressure ulcer (EPUAP/NPIAP classification) on the sacrum, buttock, heel or trochanter, or a venous leg ulcer with ABPI between 0.8 and 1.3.
+(c) Wound area between 2 cm² and 100 cm² and wound duration of at least 4 weeks.
+(d) Subject able to give written informed consent.
+
+6.3 Key exclusion criteria.
+(a) Full-thickness (third-degree) burns, or any wound with exposed bone, tendon or muscle.
+(b) Clinically infected wound at baseline, or systemic antibiotic therapy within 14 days.
+(c) Known sensitivity to silicone or to any dressing component.
+(d) ABPI below 0.8, uncontrolled diabetes (HbA1c above 86 mmol/mol), or current systemic immunosuppressive therapy.
+(e) Pregnancy or breastfeeding.
+
+6.4 Treatment. Dressings were changed every 3 to 7 days or earlier if exudate reached within 1 cm of the foam edge. VLU subjects received standard multilayer compression therapy throughout the treatment phase. PU subjects received standard pressure redistribution. No other topical wound products were permitted on the target wound.
+
+6.5 Visit schedule. Baseline (day 0); weekly to week 4; every 2 weeks to week 12; a closure confirmation visit 2 weeks after closure was first observed (up to week 14); follow-up visits at 6 months and 12 months after enrolment. Unscheduled visits were recorded when needed.
+
+6.6 Sample size. The study was powered to show that the lower bound of the two-sided 95% Clopper-Pearson CI for the primary endpoint exceeds a performance goal of 45%, derived from published closure rates for conventional foam dressings. With an assumed closure rate of 60%, 135 evaluable subjects give 93% power. Allowing for about 9% attrition, 148 subjects were enrolled.
+
+6.7 Analysis populations. ITT: all enrolled subjects who received at least one FG-200 application (n = 148). PP: ITT subjects without major protocol deviations who completed the 12-week assessment (n = 133). Safety: same as ITT (n = 148). Subjects without a 12-week assessment were counted as not closed in the primary ITT analysis.
+
+
+7. RESULTS
+
+7.1 Study dates. First subject enrolled 11 March 2024. Last subject enrolled 29 November 2024. Last subject completed the 12-week treatment phase 21 February 2025. Last 12-month follow-up visit 28 November 2025. Database lock 30 January 2026.
+
+7.2 Subject disposition.
+Enrolled and treated: 148
+Completed 12-week treatment phase: 141 (4 lost to follow-up, 2 withdrew consent, 1 died)
+Completed 12-month follow-up: 132
+Discontinued over 12 months: 16 in total (11 lost to follow-up, 2 withdrew consent, 3 died). None of the discontinuations was related to the device.
+
+7.3 Baseline characteristics (ITT, n = 148).
+Age: mean 68.4 years (SD 11.2), range 31 to 85
+Sex: 81 female (54.7%), 67 male (45.3%)
+Wound type: PU category 2, 79 (53.4%); VLU, 69 (46.6%)
+Wound area: median 9.6 cm² (interquartile range 4.8 to 21.3)
+Wound duration: median 11 weeks (interquartile range 7 to 19)
+Diabetes mellitus: 37 (25.0%)
+Moderate or heavy exudate at baseline: 102 (68.9%)
+Periwound maceration at baseline: 27 (18.2%)
+
+7.4 Primary effectiveness endpoint.
+7.4.1 ITT analysis: complete wound closure at 12 weeks in 91 of 148 subjects, 61.5% (95% CI 53.1% to 69.4%). The lower bound exceeded the 45% performance goal; the primary objective was met.
+7.4.2 By wound type: PU category 2, 52 of 79 (65.8%; 95% CI 54.3% to 76.1%); VLU, 39 of 69 (56.5%; 95% CI 44.0% to 68.4%).
+7.4.3 PP analysis: 89 of 133 (66.9%), consistent with the ITT result.
+7.4.4 By site: Site 01, 33 of 52 (63.5%); Site 02, 31 of 51 (60.8%); Site 03, 27 of 45 (60.0%). No meaningful site effect was observed.
+
+7.5 Secondary effectiveness endpoints.
+7.5.1 Time to closure: Kaplan-Meier median 63 days (95% CI 56 to 72 days).
+7.5.2 Wound area reduction at week 4: mean 46.2% (SD 28.9).
+7.5.3 Pain at dressing removal: mean NRS 1.4 (SD 1.3) across 2,058 recorded dressing changes; 92.3% of removals were scored 0 to 2. Mean pain did not increase over the treatment phase.
+7.5.4 Periwound skin: maceration was present in 27 subjects (18.2%) at baseline and in 10 of 135 assessed subjects (7.4%) at week 4. Skin stripping at removal was recorded at 11 of 2,058 dressing changes (0.5%).
+7.5.5 Wear time: mean 4.6 days (SD 1.4) per dressing.
+7.5.6 Recurrence: of the 91 subjects with closed wounds, 86 had a 12-month assessment; the wound had recurred in 9 of 86 (10.5%; 95% CI 4.9% to 18.9%).
+
+7.6 Safety.
+7.6.1 Overview. 63 AEs were reported in 41 of 148 subjects (27.7%). 7 SAEs occurred in 6 subjects (4.1%); none was assessed as related to the device or the study procedures. All AEs were coded with MedDRA version 26.1.
+7.6.2 Device-related adverse events. Exactly 2 AEs in 2 subjects (1.4%; 95% CI 0.2% to 4.8%) were assessed by the investigator and confirmed by the sponsor as related to FG-200:
+(a) Periwound maceration (subject 02-017, VLU, FG-200-10). Onset day 18, mild, non-serious, assessed as probably related. It occurred during a period of increased exudate. Managed by shortening the change interval to 2 days; resolved after 9 days without sequelae. The subject continued in the study and the wound closed at week 10.
+(b) Allergic contact dermatitis (subject 01-044, PU category 2, FG-200-15). Onset day 26, moderate, non-serious, assessed as possibly related. Erythema and pruritus matched the shape of the silicone contact layer. FG-200 was permanently discontinued for this subject and a topical corticosteroid was applied to the periwound skin; resolved after 14 days without sequelae. Patch testing was not performed. The subject remained in follow-up for safety.
+7.6.3 Device-related serious adverse events: 0. Unanticipated serious adverse device effects: 0.
+7.6.4 Serious adverse events (all unrelated): pneumonia (2), hip fracture (1), acute heart failure (1), and 3 deaths (2 cardiovascular, 1 metastatic cancer).
+7.6.5 Other AEs in 2 or more subjects (all unrelated): wound infection of the target wound (6 subjects, 4.1%, all treated with systemic antibiotics, dressing use continued per investigator judgement), new pressure ulcer at another site (5), urinary tract infection (4), fall without fracture (3), cellulitis of the lower leg (2).
+7.6.6 Device deficiencies. 4 device deficiencies were reported: 3 cases of border edge lift before the planned change and 1 pouch found torn before opening (product discarded unused). No device deficiency led to an adverse event.
+7.6.7 Safety through 12 months. No device-related AE was reported after the treatment phase. Both device-related AEs occurred during the first 4 weeks of use.
+
+
+8. DISCUSSION
+
+8.1 The primary endpoint was met. The closure rate at 12 weeks (61.5%) is within the range reported for modern silicone foam dressings in similar populations, and the result was consistent across wound types and sites.
+
+8.2 The safety profile was favourable. The 2 device-related AEs (maceration and contact dermatitis) are known risks of absorbent and adhesive dressings and are addressed in the risk management file (NBM-RMF-FG200-001) and in the warnings of the draft labeling. The single contact dermatitis case supports a contraindication for patients with known sensitivity to silicone.
+
+8.3 Limitations. The study had no control arm, so effectiveness is compared with a literature-based performance goal. Subjects with infected wounds, full-thickness burns and severe arterial disease were excluded, so the results do not apply to those wounds. Assessors were not blinded.
+
+
+9. CONCLUSIONS
+
+9.1 In adults with category 2 pressure ulcers or venous leg ulcers, FlexiGuard FG-200 achieved complete wound closure at 12 weeks in 61.5% of subjects, exceeding the prespecified performance goal.
+
+9.2 Two non-serious device-related AEs occurred in 148 subjects, both resolved, and no device-related SAEs occurred through 12 months of follow-up. The benefit-risk profile of FG-200 in the studied population is acceptable.
+
+
+10. ETHICS AND REGULATORY COMPLIANCE
+
+10.1 Ethics approval. The CIP and informed consent form were approved by the Regional Committee for Medical and Health Research Ethics (REK) before enrolment, reference 2023/61842 (fictional reference for this example), approval dated 30 January 2024. Two CIP amendments were approved (version 1.1, wound area limit corrected; version 2.0, clarification of closure confirmation visit).
+
+10.2 Informed consent. Written informed consent was obtained from every subject before any study procedure.
+
+10.3 Good clinical practice. The investigation was conducted in compliance with ISO 14155:2020, the Declaration of Helsinki, and applicable Norwegian law. Monitoring was performed by the sponsor's clinical team with 100% source data verification of primary endpoint and safety data. One sponsor audit (Site 02, September 2024) found no critical findings.
+
+10.4 Protocol deviations. 23 deviations were recorded, 15 minor (mainly visit windows) and 8 major (3 eligibility, 2 missed week-12 assessments, 3 use of a prohibited topical product on the target wound). Subjects with major deviations were excluded from the PP population.
+
+10.5 Data outside the United States. All data were collected in Norway. The sponsor considers that the investigation was conducted in accordance with good clinical practice as needed for use of non-US data in a US submission (21 CFR 812.28). A GCP compliance statement and investigator list are provided in Appendix 3 of the full report.
+
+10.6 Registration. The investigation was registered in a public clinical trial registry before first enrolment (registry entry in Appendix 1).
+
+
+11. DOCUMENT HISTORY
+
+Version 1.0, 27 February 2026: first issue after database lock.
+Version 2.0, 20 March 2026: corrected site-level closure counts in 7.4.4; added 12-month recurrence analysis.
+Version 3.0, 15 April 2026: final; device-related AE narratives expanded (7.6.2); sponsor causality review added.
+
+
+12. APPROVAL
+
+Coordinating investigator: signature on file
+Sponsor clinical lead, Northbay Medical AS: signature on file
+Sponsor head of regulatory affairs, Northbay Medical AS: signature on file
+
+Appendices (not included in this extract): 1. Registry entry; 2. CIP version 2.0; 3. GCP statement and investigator list; 4. Statistical analysis plan; 5. Subject listings; 6. AE listings.

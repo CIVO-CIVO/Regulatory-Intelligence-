@@ -1,0 +1,176 @@
+FICTIONAL EXAMPLE DOCUMENT FOR SOFTWARE DEMONSTRATION. Northbay Medical AS and FlexiGuard are invented.
+
+DRAFT LABELING, NOT FOR DISTRIBUTION
+Document ID: NBM-LBL-FG200-001
+Revision: B (draft)
+Date: 20 May 2026
+Covers: carton label, pouch label and Instructions for Use (IFU), US English
+Linked documents: risk management file NBM-RMF-FG200-001 v2.1 (warnings W1 to W10 are risk control measures); clinical investigation report NBM-CIR-FG200-001 v3.0
+
+
+==================================================
+PART 1. INSTRUCTIONS FOR USE
+==================================================
+
+FlexiGuard(TM) FG-200
+Silicone Foam Wound Dressing
+Sterile. Single use. Rx only.
+
+
+1. PRODUCT DESCRIPTION
+
+FlexiGuard FG-200 is a sterile, single-use, three-layer foam dressing:
+(a) a perforated soft silicone wound contact layer that holds the dressing gently on intact skin around the wound without sticking to the moist wound bed;
+(b) an absorbent polyurethane foam pad that takes up wound exudate;
+(c) a vapour-permeable polyurethane film backing that keeps out liquids and allows moisture vapour to escape, so the wound bed stays moist.
+
+The dressing absorbs exudate while maintaining a moist wound environment. It contains no drugs, biologics or antimicrobial agents. It is not made with natural rubber latex.
+
+
+2. SIZES AND VARIANTS
+
+FG-200-05: dressing 5 x 5 cm, foam pad 3.5 x 3.5 cm, 10 dressings per box, green colour band.
+FG-200-10: dressing 10 x 10 cm, foam pad 7.5 x 7.5 cm, 10 dressings per box, blue colour band.
+FG-200-15: dressing 15 x 15 cm, foam pad 12 x 12 cm, 10 dressings per box, purple colour band.
+
+Choose a size where the foam pad overlaps the wound edge by at least 2 cm on all sides.
+
+
+3. INTENDED USE
+
+FlexiGuard FG-200 is intended for the management of partial-thickness wounds.
+
+
+4. INDICATIONS FOR USE
+
+FlexiGuard FG-200 is indicated for adult patients for the management of pressure ulcers (category 2) and venous leg ulcers. The dressing is for use under the direction of a healthcare professional.
+
+
+5. CONTRAINDICATIONS
+
+Do not use FlexiGuard FG-200:
+(a) on third-degree (full-thickness) burns;
+(b) on patients with known sensitivity to silicone or to any of the dressing materials.
+
+
+6. WARNINGS
+
+W1. Sterile unless the pouch is opened or damaged. Do not use if the pouch is open, torn or damaged, or if the use-by date has passed.
+W2. Single use only. Do not reuse. Reuse may cause infection or cross-contamination, and the dressing may not perform as intended.
+W3. Do not resterilize.
+W4. Not intended for third-degree burns or for wounds with exposed bone, tendon or muscle.
+W5. Inspect the skin around the wound at each dressing change. If the skin is white, soft or wrinkled (signs of maceration), change the dressing more often or consult the treating clinician.
+W6. Stop using the dressing and consult a physician if redness, itching, rash or other signs of skin sensitivity or allergic reaction occur.
+W7. The dressing does not treat infection. Inspect the wound at each change. If signs of infection appear (increased pain, redness, swelling, heat, odour or pus), consult a physician. The dressing may be used during treatment of an infection only on the advice of a physician.
+
+
+7. PRECAUTIONS
+
+W8. Do not use together with oxidizing solutions such as hypochlorite or hydrogen peroxide, which can damage the foam.
+W9. For venous leg ulcers, use the dressing under the compression therapy prescribed by the treating clinician. Do not apply compression to patients with an ankle-brachial pressure index below 0.8 unless directed by a physician.
+W10. For pressure ulcers, continue pressure redistribution. The dressing does not replace pressure relief.
+(a) Do not stretch the dressing during application.
+(b) The dressing may be left in place during showering if the film backing is intact and edges are sealed.
+(c) Safety and effectiveness have not been established in children under 18 years or in pregnant or breastfeeding women.
+
+
+8. INSTRUCTIONS FOR USE
+
+1. Wash your hands and put on clean gloves.
+2. Cleanse the wound with sterile saline or a non-oxidizing wound cleanser according to local protocol. Dry the surrounding skin thoroughly.
+3. Choose the dressing size so that the foam pad overlaps the wound edge by at least 2 cm on all sides (see the size table in section 2).
+4. Check that the pouch is intact and that the use-by date has not passed.
+5. Open the pouch at the chevron and remove the dressing without touching the silicone side.
+6. Remove the release liners.
+7. Place the dressing silicone side down, centred over the wound. Do not stretch it. Smooth the border from the centre outwards.
+8. For venous leg ulcers, apply the prescribed compression bandage or stocking over the dressing.
+9. Inspect the dressing daily if possible. Change the dressing when exudate reaches within 1 cm of the pad edge, when the dressing leaks or lifts, or at least every 7 days. Inspect the wound and surrounding skin at every change.
+10. To remove, lift one corner and peel the dressing slowly back over itself in the direction of hair growth. If it sticks, moisten it with sterile saline before removal.
+11. Dispose of the used dressing as clinical waste according to local requirements.
+
+
+9. STERILITY, SHELF LIFE AND STORAGE
+
+Sterilized using ethylene oxide. Sterile unless the package is opened or damaged.
+Shelf life: 3 years from the date of manufacture. The use-by date is printed on each pouch and carton.
+Storage: store between 5 °C and 30 °C (41 °F and 86 °F) in a dry place, away from direct sunlight. Do not freeze.
+
+
+10. REPORTING
+
+Report any serious incident or adverse event involving this device to the manufacturer and to FDA MedWatch.
+
+
+11. MANUFACTURER
+
+Northbay Medical AS
+Sjøgata 21
+8006 Bodø
+Norway
+regulatory@northbaymedical.example
+www.northbaymedical.example
+
+US agent and initial importer: [to be confirmed before submission]
+
+
+12. SYMBOLS USED (ISO 15223-1:2021)
+
+REF: catalogue number
+LOT: batch code
+Use-by date (hourglass symbol)
+Date of manufacture (factory symbol with date)
+Manufacturer (filled factory symbol)
+STERILE EO: sterilized using ethylene oxide
+Single sterile barrier system
+Do not reuse (crossed-out 2)
+Do not resterilize
+Do not use if package is damaged, and consult instructions for use
+Consult instructions for use
+Keep dry (umbrella)
+Keep away from sunlight
+Temperature limit: 5 °C to 30 °C
+Not made with natural rubber latex
+Rx only: Caution: Federal law restricts this device to sale by or on the order of a physician or other licensed healthcare practitioner.
+
+IFU revision: NBM-LBL-FG200-001 Rev B, 2026-05
+
+
+==================================================
+PART 2. POUCH LABEL (each dressing)
+==================================================
+
+FlexiGuard(TM) FG-200 Silicone Foam Wound Dressing
+REF FG-200-10 (variant text repeated for FG-200-05 and FG-200-15)
+10 x 10 cm
+STERILE EO. Single use. Do not resterilize. Do not use if package is damaged.
+LOT [lot] | Use-by [YYYY-MM-DD] | Manufactured [YYYY-MM-DD]
+Rx only. Consult instructions for use.
+Northbay Medical AS, 8006 Bodø, Norway
+Colour band: blue (FG-200-10)
+
+
+==================================================
+PART 3. CARTON LABEL (box of 10)
+==================================================
+
+FlexiGuard(TM) FG-200
+Silicone Foam Wound Dressing
+REF FG-200-10, 10 x 10 cm, 10 sterile dressings
+Scaled outline of the dressing size printed on the front panel.
+Intended use: management of partial-thickness wounds.
+Contraindications: third-degree burns; known sensitivity to silicone.
+See enclosed instructions for use for warnings and precautions.
+STERILE EO | Single use | Store 5 °C to 30 °C | Keep dry | Keep away from sunlight
+LOT [lot] | Use-by [YYYY-MM-DD]
+Rx only
+Northbay Medical AS, Sjøgata 21, 8006 Bodø, Norway
+Unique Device Identifier (UDI): [GS1 barcode and human-readable text, to be assigned]
+
+
+==================================================
+OPEN ITEMS FOR REVISION C
+==================================================
+
+1. Confirm US agent and initial importer details.
+2. Assign UDI device identifiers for all three variants.
+3. Final artwork review of colour bands and scaled size outline (usability evaluation NBM-USE-FG200-002).

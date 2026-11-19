@@ -1,0 +1,193 @@
+FICTIONAL EXAMPLE DOCUMENT FOR SOFTWARE DEMONSTRATION. Northbay Medical AS and FlexiGuard are invented.
+
+NORTHBAY MEDICAL AS
+RISK MANAGEMENT FILE (EXCERPT): FLEXIGUARD FG-200 WOUND DRESSING
+
+Document ID: NBM-RMF-FG200-001
+Version: 2.1
+Date: 6 May 2026
+Standard applied: ISO 14971:2019, Medical devices, Application of risk management to medical devices
+Procedure: NBM-SOP-RM-001, Risk management
+Owner: Northbay Medical QA / Risk management
+Status: Approved
+
+
+1. SCOPE
+
+1.1 This file covers the FlexiGuard FG-200 silicone foam wound dressing in three sizes: FG-200-05 (5 x 5 cm), FG-200-10 (10 x 10 cm) and FG-200-15 (15 x 15 cm). It covers the whole life cycle: design, manufacture, ethylene oxide (EO) sterilization, packaging, storage over the 3-year shelf life, transport, clinical use and disposal.
+
+1.2 Intended use: management of partial-thickness wounds. Indications: adults with pressure ulcers (category 2) and venous leg ulcers. Contraindications: third-degree burns; known sensitivity to silicone. Intended users: healthcare professionals, and patients or carers trained by a healthcare professional. Use environment: hospitals, outpatient clinics, nursing homes and home care.
+
+1.3 Device: sterile, single-use dressing with a perforated silicone wound contact layer, a polyurethane foam absorbent core and a polyurethane film backing. No drug or biologic component.
+
+1.4 This excerpt contains the risk acceptability criteria, the hazard analysis table for the main hazards, and the overall residual risk evaluation. The full file also contains the use-related risk analysis (NBM-URA-FG200-001) and the process FMEA (NBM-PFMEA-FG200-001).
+
+
+2. RISK MANAGEMENT TEAM AND REVIEW
+
+2.1 Team: QA risk manager (chair), R&D project lead, regulatory affairs, clinical lead, production engineering, sterilization specialist, external wound care nurse advisor.
+
+2.2 Version 2.1 updates the probability estimates with data from clinical investigation NB-FG-2024-01 (report NBM-CIR-FG200-001 v3.0, 15 April 2026) and links the warnings in the draft labeling (NBM-LBL-FG200-001 Rev B) to the risk control measures.
+
+
+3. RISK ACCEPTABILITY CRITERIA
+
+3.1 Severity scale.
+S1 Negligible: discomfort or inconvenience, no treatment needed.
+S2 Minor: temporary injury or skin reaction, resolves with simple treatment or a change of dressing routine.
+S3 Serious: injury needing medical treatment (for example prescription drugs) or delayed healing of more than 2 weeks.
+S4 Critical: permanent impairment, or injury needing hospital admission or surgery.
+S5 Catastrophic: death.
+
+3.2 Probability scale (probability of harm per patient treatment episode).
+P1 Improbable: less than 1 in 1,000,000.
+P2 Remote: 1 in 1,000,000 to 1 in 10,000.
+P3 Occasional: 1 in 10,000 to 1 in 100.
+P4 Probable: 1 in 100 to 1 in 10.
+P5 Frequent: more than 1 in 10.
+
+3.3 Risk evaluation.
+Acceptable (A): S1 with any probability; S2 with P1 to P3; S3 with P1 to P2; S4 with P1.
+Reduce as far as possible (R): S2 with P4; S3 with P3; S4 with P2; S5 with P1. Further control measures shall be implemented where practicable; the residual risk may be accepted after a documented benefit-risk analysis.
+Unacceptable (U): all other combinations. Design or process changes are required.
+
+3.4 Per ISO 14971:2019, information for safety in the labeling is accepted as a risk control measure only after inherent safety by design and protective measures have been considered. Labeling controls are verified for presence (labeling review) and for effectiveness (usability evaluation NBM-USE-FG200-002).
+
+
+4. HAZARD ANALYSIS TABLE
+
+Notation: Initial = before risk control; Residual = after risk control. Labeling references (W1 to W10, IFU steps) refer to the draft labeling NBM-LBL-FG200-001 Rev B.
+
+H-01 Periwound maceration
+Hazard: excess moisture (exudate) retained against periwound skin.
+Hazardous situation: exudate volume exceeds the absorbent capacity of the dressing, or the dressing is left in place too long.
+Harm: maceration and breakdown of periwound skin, wound enlargement, delayed healing.
+Initial risk: S2, P5, Unacceptable.
+Risk control measures:
+(1) Design: high-absorbency polyurethane foam with vertical wicking and vapour-permeable film backing. Verification: fluid handling capacity per EN 13726 and moisture vapour transmission rate, test report NBM-TR-FG200-006 (fluid handling capacity mean 14.2 g per 10 cm² per 24 h; MVTR mean 6,800 g/m²/24 h; pass).
+(2) Labeling: W5 (inspect periwound skin at each change, change more often if signs of maceration) and IFU step 9 (change when exudate is within 1 cm of the pad edge, maximum wear 7 days).
+Clinical data: 1 device-related maceration in 148 subjects (NB-FG-2024-01), mild, resolved.
+Residual risk: S2, P3, Acceptable.
+
+H-02 Allergic reaction or sensitization to silicone adhesive or other materials
+Hazard: chemical sensitizer or irritant in the silicone contact layer, adhesive or foam.
+Hazardous situation: dressing applied to a patient who is or becomes sensitized.
+Harm: allergic contact dermatitis, irritation; rarely a severe skin reaction.
+Initial risk: S3, P3, Reduce.
+Risk control measures:
+(1) Design: medical-grade silicone and polyurethane with supplier material certificates; incoming material controls per NBM-SPEC-FG200-003.
+(2) Verification: biological evaluation per ISO 10993-1, BER NBM-BER-FG200-001 v1.0 (cytotoxicity, sensitization, irritation, acute systemic toxicity, pyrogenicity: pass; subacute toxicity and genotoxicity addressed by chemical characterization and toxicological risk assessment).
+(3) Labeling: contraindication for known sensitivity to silicone; W6 (discontinue use if redness, itching, rash or other signs of sensitivity occur).
+Clinical data: 1 possibly related allergic contact dermatitis in 148 subjects (0.7%), moderate, resolved after discontinuation.
+Residual risk: S3, P3, Reduce as far as possible. The probability estimate was raised from P2 to P3 in version 2.1 based on the clinical rate. No further practicable design measure was identified (silicone is the lowest-sensitization contact material available for this design). Accepted after the benefit-risk analysis in section 6.2.
+
+H-03 Infection from non-sterile product
+Hazard: microbial contamination of the wound contact surface.
+Hazardous situation: sterilization failure, sterile barrier breach in transport, use of a damaged pouch, or reuse of a dressing.
+Harm: wound infection, cellulitis; in vulnerable patients systemic infection.
+Initial risk: S4, P3, Unacceptable.
+Risk control measures:
+(1) Process: EO sterilization validated per ISO 11135:2014 to a sterility assurance level of 10^-6, validation report NBM-VAL-EO-FG200-001; routine release by biological indicators per load.
+(2) Packaging: sterile barrier system validated per ISO 11607-1:2019 and ISO 11607-2:2019 (seal strength per ASTM F88, dye penetration per ASTM F1929, bubble leak), including after transport simulation (ASTM D4169) and accelerated ageing (ASTM F1980) equivalent to 3 years, report NBM-TR-FG200-011 (pass); real-time ageing to 3 years ongoing, 2-year time point passed.
+(3) EO residuals within ISO 10993-7 limits, report NBM-TR-FG200-009.
+(4) Labeling: W1 (do not use if pouch is opened or damaged), W2 (single use, do not reuse), W3 (do not resterilize), sterility statement, use-by date and STERILE EO symbol.
+Residual risk: S4, P1, Acceptable.
+
+H-04 Adherence to the wound bed causing trauma on removal
+Hazard: dressing adheres to newly formed tissue or dried exudate.
+Hazardous situation: dressing removed from a wound bed where exudate has dried, or pulled off quickly.
+Harm: pain, bleeding, damage to new epithelium, skin stripping of fragile periwound skin, delayed healing.
+Initial risk: S2, P4, Reduce.
+Risk control measures:
+(1) Design: perforated soft silicone wound contact layer with low adhesion to moist wound beds. Verification: peel force to skin-simulant substrate after 7 days, report NBM-TR-FG200-007 (mean 0.9 N/25 mm, within the specification of 0.5 to 1.5 N/25 mm); wound bed adherence model, report NBM-TR-FG200-008 (pass).
+(2) Labeling: IFU step 10 (lift a corner and peel slowly in the direction of hair growth; moisten with sterile saline if the dressing sticks).
+Clinical data: mean pain at removal NRS 1.4; skin stripping at 0.5% of dressing changes; no device-related AE of this type.
+Residual risk: S2, P3, Acceptable.
+
+H-05 Use on contraindicated wounds (third-degree burns and other full-thickness injuries)
+Hazard: dressing used outside its intended use.
+Hazardous situation: FG-200 applied to a third-degree (full-thickness) burn, which needs specialist burn care, instead of referral.
+Harm: delayed specialist treatment, infection, worse healing outcome.
+Initial risk: S3, P3, Reduce.
+Risk control measures:
+(1) Labeling: contraindication for third-degree burns; W4 (not intended for third-degree burns or wounds with exposed bone, tendon or muscle); Rx only.
+(2) Training material for distributors and clinical users (NBM-TRN-FG200-001).
+Residual risk: S3, P2, Acceptable.
+Note: no design measure is practicable for this hazard. The risk is reduced by information for safety, which is effective in the professional user population per usability evaluation NBM-USE-FG200-002.
+
+H-06 Mix-up of sizes
+Hazard: wrong dressing size selected.
+Hazardous situation: a dressing that is too small for the wound is applied, so the wound edge is not covered and exudate leaks onto intact skin; or a size is picked by mistake from shelves holding several sizes.
+Harm: maceration of periwound skin, leakage, more frequent changes, delayed healing.
+Initial risk: S2, P4, Reduce.
+Risk control measures:
+(1) Labeling and packaging: size printed in large type on pouch and carton with a distinct colour band per size (FG-200-05 green, FG-200-10 blue, FG-200-15 purple); dimensions shown as a scaled outline on the carton. Verified in labeling review and usability evaluation NBM-USE-FG200-002 (0 size selection errors in 45 simulated use tasks).
+(2) Labeling: IFU step 3 (choose a size so that the foam pad overlaps the wound edge by at least 2 cm on all sides) and the size table in the IFU.
+Residual risk: S2, P3, Acceptable.
+
+H-07 Use of expired or degraded product
+Hazard: loss of adhesion, absorbency or sterile barrier integrity after the shelf life or after storage outside the specified conditions.
+Hazardous situation: expired dressing used, or dressing stored at high temperature or humidity.
+Harm: leakage and maceration, infection (see H-01, H-03).
+Initial risk: S3, P3, Reduce.
+Risk control measures:
+(1) Shelf life of 3 years supported by accelerated ageing (ASTM F1980) of product performance and package integrity, report NBM-TR-FG200-011, with real-time ageing ongoing.
+(2) Labeling: use-by date on pouch and carton; storage conditions 5 °C to 30 °C, keep dry, keep away from direct sunlight.
+Residual risk: S3, P2, Acceptable.
+
+H-08 Dressing component damaged by incompatible products
+Hazard: oxidizing agents such as hypochlorite or hydrogen peroxide degrade the polyurethane foam.
+Hazardous situation: dressing used together with oxidizing wound cleansers.
+Harm: loss of absorbency, foam fragments in the wound, delayed healing.
+Initial risk: S2, P3, Acceptable.
+Risk control measures: Labeling W8 (do not use together with oxidizing solutions such as hypochlorite or hydrogen peroxide). Bench test NBM-TR-FG200-014 confirmed no particle shedding under normal use.
+Residual risk: S2, P2, Acceptable.
+
+H-09 Masking of wound infection
+Hazard: dressing covers the wound for up to 7 days.
+Hazardous situation: an infection develops under the dressing and is not noticed between changes.
+Harm: progression of infection, cellulitis.
+Initial risk: S3, P3, Reduce.
+Risk control measures: Labeling W7 (the dressing does not treat infection; inspect the wound at each change and consult a physician if signs of infection appear) and IFU step 9 (maximum wear 7 days).
+Residual risk: S3, P2, Acceptable.
+
+
+5. SUMMARY OF RISK CONTROL MEASURES IN LABELING
+
+The following warnings and statements in the labeling are risk control measures and shall not be removed or weakened without a change to this file:
+Contraindications (third-degree burns; known sensitivity to silicone): H-02, H-05.
+W1 to W3 and the sterility statement: H-03.
+W4: H-05.
+W5 and IFU step 9: H-01, H-09.
+W6: H-02.
+W7: H-09.
+W8: H-08.
+IFU step 3 and the size table: H-06.
+IFU step 10: H-04.
+Use-by date and storage conditions: H-07.
+
+
+6. OVERALL RESIDUAL RISK EVALUATION
+
+6.1 After implementation and verification of all risk control measures, all individual residual risks are in the Acceptable region except H-02 (allergic reaction or sensitization), which remains in the Reduce region (S3, P3). No residual risk remains in the Unacceptable region.
+
+6.2 Benefit-risk analysis and overall residual risk. The team considered all residual risks together, including the combined effect of H-01, H-06 and H-07 on periwound skin, and the residual risk of H-02. Clinical investigation NB-FG-2024-01 (148 subjects, 12 months follow-up) showed 2 non-serious device-related adverse events (one maceration, one allergic contact dermatitis) and no device-related serious adverse events, with complete wound closure in 61.5% of subjects at 12 weeks. The overall residual risk is judged acceptable in relation to the clinical benefit of FG-200 in its intended use.
+
+6.3 Disclosure of residual risks. Residual risks of maceration, skin sensitivity and infection are disclosed to users in the warnings of the labeling (section 5).
+
+6.4 Production and post-production. Complaint data, adverse event reports and literature on silicone foam dressings will be reviewed at least once a year in the post-market surveillance plan NBM-PMS-FG200-001, and this file will be updated when new hazards or changed probabilities are identified.
+
+
+7. APPROVAL
+
+QA risk manager: approved, 6 May 2026
+R&D project lead: approved, 6 May 2026
+Regulatory affairs: approved, 6 May 2026
+Head of Quality: approved, 6 May 2026
+
+
+DOCUMENT HISTORY
+
+Version 1.0, 20 June 2023: initial risk analysis (design phase).
+Version 2.0, 4 October 2025: sterilization, packaging and biocompatibility verification results added.
+Version 2.1, 6 May 2026: probabilities updated with clinical data from NB-FG-2024-01; hazards H-08 and H-09 added; labeling references aligned with NBM-LBL-FG200-001 Rev B.
