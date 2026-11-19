@@ -44,8 +44,15 @@ deploys automatically.
 The civo2 team must have a payment card on file for AI Gateway (Vercel → team → AI Gateway); without it every
 AI call fails with `customer_verification_required` and the app shows a clear message.
 
-Optional environment variables (instead of the gateway): `TYPESAFE_API_KEY` (Jev direct), `ANTHROPIC_API_KEY`
-(Claude direct), `AI_GATEWAY_API_KEY`.
+**Own keys instead of the gateway:** set both in Vercel (Project → Settings → Environment Variables, Production),
+then redeploy, because env changes only reach new deployments:
+
+- `TYPESAFE_API_KEY`: Jev goes straight to `api.typesafe.ai/v1/systemone` (model `jev-1.14.0`)
+- `ANTHROPIC_API_KEY`: Claude goes straight to Anthropic (`claude-sonnet-5-5`, `claude-haiku-5-5`)
+
+Set both: a role without its own key still goes through the gateway. Data retention then follows those accounts'
+terms (the gateway's `zeroDataRetention` filter no longer applies). `AI_GATEWAY_API_KEY` (a gateway key from a team
+with billing) also works. The sidebar shows which connection each project used.
 
 ## Local development
 

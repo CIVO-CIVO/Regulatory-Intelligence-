@@ -253,8 +253,11 @@ export default function Home({
 
         <p className="mt-10 max-w-[640px] text-[12px] leading-relaxed text-faint">
           Your files and drafts are stored only in this browser. Their text is sent to the AI models (Claude to build the checklist, Jev to check
-          your draft) while they are being analysed, with zero data retention, and is not kept on our server. The scores are writing feedback from
-          your own documents, not a regulatory decision.
+          your draft) while they are being analysed
+          {status && /Gateway/.test(`${status.jev} ${status.llm}`) && !/TypeSafe|Anthropic/.test(`${status.jev} ${status.llm}`)
+            ? ', with zero data retention,'
+            : ", under the AI providers' own data terms,"}{' '}
+          and is not kept on our server. The scores are writing feedback from your own documents, not a regulatory decision.
         </p>
       </div>
     </main>
