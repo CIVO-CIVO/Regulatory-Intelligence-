@@ -143,11 +143,17 @@ async function nanoObject<T>(opts: {
       });
       const text = await res.text();
       if (!res.ok) throw Object.assign(new Error(`NanoGPT HTTP ${res.status}: ${text.slice(0, 300)}`), { statusCode: res.status, responseBody: text.slice(0, 2000) });
-      const json = JSON.parse(text) as { choices?: { message?: { content?: string }; finish_reason?: string }[]; usage?: { prompt_tokens?: number; completion_tokens?: number } };
+      const json = JSON.parse(text) as {
+        choices?: { message?: { content?: string }; finish_reason?: string }[];
+        usage?: { prompt_tokens?: number; completion_tokens?: number };
+        x_nanogpt_pricing?: { cost?: number };
+      };
       const content = json.choices?.[0]?.message?.content ?? '';
       if (json.choices?.[0]?.finish_reason === 'length') throw new Error(`${model} ran out of output tokens`);
       const parsed = opts.schema.parse(JSON.parse(firstJsonObject(content)));
-      console.log(`[llm] ${model} ok ${Date.now() - t0} ms, tokens ${json.usage?.prompt_tokens ?? '?'} in / ${json.usage?.completion_tokens ?? '?'} out`);
+      const cost = json.x_nanogpt_pricing?.cost;
+      const costText = typeof cost === 'number' ? `USD ${cost.toFixed(5)}` : 'unknown';
+      console.log(`[llm] ${model} ok ${Date.now() - t0} ms, tokens ${json.usage?.prompt_tokens ?? '?'} in / ${json.usage?.completion_tokens ?? '?'} out, cost ${costText} (balance)`);
       return parsed;
     } catch (err) {
       lastErr = err;

@@ -52,6 +52,9 @@ question with its probabilities, the evidence passages, the draft sections Jev r
 - Model choice came from `scripts/bakeoff-models.mts` (real example rules, scored by quote verification):
   DeepSeek V4.1 Flash 37/37 quotes verified in 29 s; GLM-5.3 33/34; Kimi K2.6 26/26 in 65 s; GLM-5.3 Flash and
   Qwen3.8 Flash produced broken output. Override with `NANOGPT_MODEL` / `NANOGPT_FALLBACK_MODEL`.
+- Cost: a full project build (sort, requirement map, questions) plus a focus change is about 130k input and 18k
+  output tokens, roughly USD 0.01 on NanoGPT (measured; each call's exact cost is in the server log as
+  `[llm] ... cost`). Jev checks are billed by TypeSafe and cost a fraction of a cent each.
 - Local copies of the keys: `~/.config/regulatory-intelligence/secrets.env` (never in the repo).
 - Without those keys the app falls back to Vercel AI Gateway (OIDC, Haiku 5.5 + Jev), which needs a card on the
   civo2 team. `ANTHROPIC_API_KEY` / `AI_GATEWAY_API_KEY` are also accepted.
