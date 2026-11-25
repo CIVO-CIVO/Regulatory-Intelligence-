@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { locateQuote, pageAt, splitSections, selectSections, countWords } from '../src/lib/text.ts';
 import { lintElement } from '../src/lib/lint.ts';
 
-const cfr = readFileSync('public/examples/21-CFR-807-subpart-E.txt', 'utf8');
+const cfr = readFileSync('public/examples/flexiguard-510k/21-CFR-807-subpart-E.txt', 'utf8');
 
 test('exact quote is found and maps back to original offsets', () => {
   const q = 'The device name, including both the trade or proprietary name and the common or usual name or classification name of the device.';
@@ -38,7 +38,7 @@ test('page markers give the page of a quote', () => {
 });
 
 test('draft sections: heading line + body, blank lines between', () => {
-  const draft = readFileSync('public/examples/draft.txt', 'utf8');
+  const draft = readFileSync('public/examples/flexiguard-510k/draft.txt', 'utf8');
   const s = splitSections(draft);
   assert.deepEqual(s.map((x) => x.heading), ['Device description', 'Intended use', 'Clinical evidence', 'Biocompatibility', 'Labeling', 'Substantial equivalence']);
   assert.match(s[2].text, /148 subjects/);

@@ -1,0 +1,68 @@
+FICTIONAL EXAMPLE DOCUMENT FOR SOFTWARE DEMONSTRATION. Tallvik Talentdata AS is an invented company.
+
+KANDISORT 2.4: HUMAN OVERSIGHT DESIGN NOTE
+Internal design record, Tallvik Talentdata AS
+
+Document ID: TT-HOD-011
+Version: 1.2
+Date: 2 April 2026
+Owner: Product Owner, Kandisort
+Reviewed by: AI Compliance Lead; Head of UX Research
+Related documents: TT-VAL-024 Model card and validation report; TT-RMR-003 Risk management register; TT-SPEC-LOG-007 Logging and data retention specification
+
+1. PURPOSE
+
+This note records how human oversight is built into Kandisort 2.4, the design decisions behind it, the results of the usability tests, and the oversight measures that deployers must put in place. It is the source for the human oversight section of the Kandisort instructions for use.
+
+2. DESIGN DECISIONS
+
+D-01 No automatic rejection. Kandisort never rejects an application. There is no score cut-off, no automatic rejection and no bulk rejection based on the match score. Every rejection is an action taken by a recruiter, and the reject button only becomes active after the recruiter has opened the application.
+
+D-02 Override. The recruiter can move any application up or down the list, invite any applicant to interview whatever the rank, and mark a ranking as wrong with a reason code. Overrides are logged (TT-SPEC-LOG-007, section 2).
+
+D-03 Explanation panel. For every application Kandisort shows the match score, the rank, the five factors that contributed most to the score, and the confidence flag. The panel also shows which requirements in the job profile the application did not match, so the recruiter can check them against the CV.
+
+D-04 Low-confidence flag. Applications that are scanned images, written in an unsupported language, or lost more than 10% of their text in parsing get a low-confidence flag. Flagged applications are shown in a separate list and must be read in full by a recruiter.
+
+D-05 Hide-scores mode. Recruiters can hide scores and ranks and read applications in the order they were received, to check their own judgement against the ranking.
+
+D-06 Pause ranking (stop function). An administrator at the deployer can pause Kandisort for one position or for the whole account at any time with the Pause ranking button. While Kandisort is paused, applications are shown in the order they were received, without scores, and recruiters can continue their work. Pausing and restarting are logged.
+
+D-07 Mandatory oversight training. Recruiters get access to Kandisort only after completing the Kandisort oversight training: a 45-minute online course with a final test (pass mark 80%). The course covers what the match score means and does not mean, the known limitations and the applicant groups with lower accuracy, the risk of automation bias (relying too much on the ranking), how to override the ranking, and when to pause Kandisort. Refresher training is required every 12 months.
+
+3. USABILITY AND AUTOMATION BIAS TESTS
+
+Formative and summative usability tests were run with 24 recruiters at three pilot deployers between September 2025 and February 2026.
+
+- Automation bias test: participants reviewed a position where the top five of the ranking had been deliberately made wrong. Without training, 41% of participants accepted the wrong ranking without change. After the oversight training, 12% did. The hide-scores mode and the "not matched" list in the explanation panel reduced this further to 8%.
+- 22 of 24 participants correctly explained after training that a match score is not a measure of an applicant's ability or suitability.
+- All 24 participants found and used the Pause ranking button within 30 seconds.
+
+4. OVERSIGHT MEASURES FOR DEPLOYERS
+
+The instructions for use must tell deployers to put the following measures in place. Kandisort supports each measure, but only the deployer can carry it out.
+
+M-01 Assign oversight to recruiters who have completed the Kandisort oversight training and who have the authority to invite any applicant to interview, whatever the rank.
+
+M-02 Read every application with a low-confidence flag in full.
+
+M-03 Before closing a position, look through the lower half of the ranking, and in particular applications from applicants aged 50 and over, applicants with career gaps and applicants with education from outside the Nordic countries, where accuracy is lower (TT-VAL-024, section 6).
+
+M-04 Monitor the override rate and the low-confidence rate on the Monitoring page each month, and tell Tallvik through the support portal or by email to kandisort-support@tallvik-talentdata.no when an alert appears or the ranking seems wrong. If the deployer has reason to believe Kandisort presents a risk, it should pause Kandisort and inform Tallvik and the market surveillance authority without undue delay. Serious incidents must be reported to Tallvik immediately.
+
+M-05 Keep the ranking logs that are under the deployer's control for at least the default 190 days; do not delete exports earlier.
+
+M-06 Informing workers and applicants. Before an employer starts using Kandisort, it must inform the workers' representatives and the affected workers. Deployers must tell applicants, in the job advertisement and in the confirmation of receipt, that Kandisort is used to rank applications. Tallvik provides template notices for applicants and for workers' representatives in the deployer pack.
+
+M-07 Explanation on request. An applicant who is rejected can ask the deployer for an explanation of the role Kandisort played in the decision and the main reasons for the decision. The explanation panel and the ranking logs give the deployer the information it needs to answer.
+
+M-08 Use the information in the instructions for use when carrying out the deployer's data protection impact assessment.
+
+5. OPEN POINTS
+
+- Translation of the oversight training into Swedish and Danish is planned for the October 2026 release.
+- A "second reviewer" option for positions with more than 500 applications is being evaluated; no decision yet.
+
+6. APPROVAL
+
+Design decisions D-01 to D-07 are implemented in Kandisort 2.4 and verified in release test TT-REL-024-T12. This note was approved by the AI Compliance Lead on 2 April 2026.

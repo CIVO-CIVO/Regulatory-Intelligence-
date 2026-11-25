@@ -1,0 +1,77 @@
+{
+  "id": "ai-act-hiring",
+  "name": "Kandisort 2.4 instructions for use",
+  "menu": "AI Act: CV ranking instructions",
+  "menuSub": "EU AI Act, Regulation 2024/1689 · 6 files · 3 pages",
+  "description": "Instructions for use, with guidance for deployers, for Kandisort 2.4, a high-risk AI system that screens and ranks job applications (EU AI Act, Annex III, point 4(a), employment). Kandisort reads text CVs only and uses no biometric data.",
+  "notice": "Example files loaded. The two AI Act excerpts are real Official Journal text; the Kandisort model card, risk register, logging specification and oversight note are fictional.",
+  "files": [
+    {"path": "AI-Act-high-risk-requirements-excerpt.pdf", "label": "AI Act - requirements for high-risk AI systems (Art 10-15).pdf", "expectRole": "regulation"},
+    {"path": "AI-Act-classification-and-deployer-obligations-excerpt.pdf", "label": "AI Act - classification, logs and deployer obligations (Art 6, 19, 26, 86).pdf", "expectRole": "regulation"},
+    {"path": "Kandisort-model-card-and-validation-report.pdf", "label": "Kandisort 2.4 model card and validation report.pdf", "expectRole": "evidence"},
+    {"path": "Kandisort-risk-management-register.pdf", "label": "Kandisort risk management register rev 6.pdf", "expectRole": "evidence"},
+    {"path": "Kandisort-logging-and-retention-specification.docx", "label": "Logging and data retention specification v1.4.docx", "expectRole": "evidence"},
+    {"path": "Kandisort-human-oversight-design-note.txt", "label": "Human oversight design note v1.2.txt", "expectRole": "evidence"}
+  ],
+  "pages": [
+    {"title": "Instructions for use", "path": "instructions-for-use.txt"},
+    {"title": "Human oversight and logging", "path": "human-oversight-and-logging.txt"},
+    {"title": "Accuracy, limitations and data", "path": "accuracy-limitations-and-data.txt"}
+  ],
+  "demo": [
+    {
+      "page": "Human oversight and logging",
+      "do": "replace",
+      "find": "The ranking logs are deleted after 7 days to limit the storage of applicant data.",
+      "text": "Kandisort keeps the ranking logs for 190 days, which is more than six months, and then deletes them automatically. Deployers can extend the retention period of the ranking logs to up to 24 months.",
+      "say": "Fix the red log retention: 7 days becomes 190 days, as the logging specification says.",
+      "expect": "The log retention rules (Articles 19 and 26(6)) and the rule on describing the logs (Article 13(3)(f)) go from red to green."
+    },
+    {
+      "page": "Human oversight and logging",
+      "do": "insert-after",
+      "find": "and mark a ranking as wrong with a reason.",
+      "text": " To save time, applications with a match score below 40 are rejected automatically before a recruiter sees them, so recruiters can rely on the ranking.",
+      "say": "Add a sentence that lets Kandisort reject low scores automatically.",
+      "expect": "The human oversight rules (Article 14) and the rule on oversight in the instructions (Article 13(3)(d)) turn red with a warning."
+    },
+    {
+      "page": "Human oversight and logging",
+      "do": "replace",
+      "find": " To save time, applications with a match score below 40 are rejected automatically before a recruiter sees them, so recruiters can rely on the ranking.",
+      "text": " No application is rejected automatically: there is no score cut-off, and every rejection is an action taken by a recruiter after opening the application.",
+      "say": "Rewrite it the correct way: no automatic rejection, a recruiter decides.",
+      "expect": "The same rules turn green again."
+    },
+    {
+      "page": "Accuracy, limitations and data",
+      "do": "replace",
+      "find": "In validation, Kandisort was 99% accurate for all applicants, regardless of age, gender or language.",
+      "text": "The accuracy metric is top-quartile agreement: the share of the applications that the panel placed in the top quarter that Kandisort also placed in its top quarter. Overall top-quartile agreement was 87.4%. Accuracy is lower for applicants aged 50 and over (81.7%), applicants with a career gap of more than 24 months (79.3%), applicants with education from outside the Nordic countries (80.2%) and applications in English (84.6%).",
+      "say": "Replace the 99% claim with the real figures from the validation report.",
+      "expect": "The accuracy rules (Article 15(3), Article 13) go from red to green."
+    },
+    {
+      "page": "Accuracy, limitations and data",
+      "do": "delete",
+      "find": "Robustness and cybersecurity\nKandisort gives the same score when an application is uploaded again, and small changes in spelling or formatting change the score by less than 2 points. Hidden text, such as white keywords added to a CV, is detected and removed before scoring. Kandisort runs in an isolated EU cloud environment and is tested by an external security firm every year. Recruiter feedback is reviewed before it is used to train a new model version, so that manipulated feedback cannot change the model.",
+      "say": "Delete the whole robustness and cybersecurity paragraph.",
+      "expect": "The cybersecurity rules (Article 15(5)) leave the list: the page no longer covers them, so they go neutral, not red."
+    },
+    {
+      "page": "Human oversight and logging",
+      "do": "append",
+      "text": "Informing workers and applicants\nBefore an employer starts using Kandisort, it must inform the workers' representatives and the affected workers. Deployers must also tell every applicant, in the job advertisement and in the confirmation of receipt, that Kandisort is used to rank applications. An applicant who is rejected can ask the deployer for an explanation of the role Kandisort played in the decision and the main reasons for the decision; the explanation panel and the ranking logs give the deployer what it needs to answer. Tallvik provides template notices for applicants and for workers' representatives in the deployer pack.",
+      "say": "Paste a new paragraph on informing workers and applicants.",
+      "expect": "New rules appear: informing workers' representatives and applicants (Article 26(7) and 26(11)) and the right to an explanation (Article 86)."
+    },
+    {
+      "page": "Instructions for use",
+      "do": "replace",
+      "find": "plain text files in Norwegian, Swedish, Danish and English.",
+      "text": "plain text files in Norwegian, Swedish, Danish, Finnish and English, and scores applications in all five languages with the same accuracy.",
+      "say": "On the first page, claim that Finnish is supported with the same accuracy. The model card says Finnish is not supported.",
+      "expect": "Rules on the instructions for use (Article 13) turn red with a warning: the claim contradicts the model card."
+    }
+  ]
+}

@@ -34,7 +34,7 @@ test('one page keeps its own headings; several pages prefix the page title; empt
 
 test('Word-style text (blank line after every paragraph) keeps real sections together', async () => {
   const { readFileSync } = await import('node:fs');
-  const labeling = readFileSync('public/examples/Labeling-draft.txt', 'utf8').replace(/\n/g, '\n\n');
+  const labeling = readFileSync('public/examples/flexiguard-510k/Labeling-draft.txt', 'utf8').replace(/\n/g, '\n\n');
   const secs = pageSections([{ title: 'Labeling', text: labeling }]);
   const heads = secs.map((s) => s.heading);
   assert.ok(heads.includes('6. WARNINGS'), 'numbered heading kept');

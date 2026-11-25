@@ -109,12 +109,25 @@ npm test                            # quote matching, sections, Jev templates, s
 Dev-only backends (refused on Vercel): `JEV_BACKEND=mock` (crude keyword stand-in, labelled in the UI) and
 `LLM_BACKEND=claude-cli` (the Claude Code CLI logged in on this machine).
 
-## Example project
+## Example projects (demo cases)
 
-"..." → "Try the example project" loads six files from `public/examples/`: the real eCFR text of 21 CFR 807
-Subpart E, an excerpt of the real FDA eSTAR 510(k) guidance, and four fictional FlexiGuard FG-200 files (ISO
-10993-1 internal summary, clinical study report, risk management file, labeling draft), plus the short draft from
-the design mock-up. The fictional files leave deliberate gaps (sizes, sterility, shelf life, bench tests).
+The "..." menu on the front page lists the example projects in `public/examples/index.json`. Each lives in
+`public/examples/<id>/` with a `case.json` (name, description, files with their labels, draft pages, and a demo
+script), real regulation texts (eCFR, EU Official Journal) and clearly labelled fictional company files. An example
+keeps its draft pages unless the user renames the project.
+
+The demo script in each `case.json` is a list of edits a presenter makes in order (break a rule, fix it, contradict a
+project fact, delete a paragraph, paste a new one). `scripts/demo-case.mts` proves them with the real engine: it reads
+the files the way the browser does, builds the rules (cached by file content), checks every page and prints which
+rules change at each step:
+
+```bash
+set -a; . ~/.config/regulatory-intelligence/secrets.env; set +a
+./node_modules/.bin/tsx --conditions=react-server scripts/demo-case.mts public/examples/<id>
+```
+
+Re-run it for every case after any change to prompts, thresholds or the example files. `tests/examples.test.ts`
+checks that every listed case loads and that each demo step applies to the pages.
 
 ## Limits (MVP)
 

@@ -1,0 +1,20 @@
+Provider
+Kandisort 2.4 is provided by Tallvik Talentdata AS, Trondheim, Norway. These instructions for use are for employers and recruitment agencies that use Kandisort (deployers). Questions about these instructions can be sent through the Kandisort customer portal.
+
+Intended purpose
+Kandisort is intended to be used by employers and recruitment agencies to analyse and rank job applications for one advertised position, so that a recruiter can decide which applications to read first and whom to invite to interview. Kandisort is a high-risk AI system under Annex III, point 4(a), of Regulation (EU) 2024/1689. It must not be used for decisions on promotion, termination or task allocation of employees, or to assess the personality, emotions or health of applicants.
+
+How Kandisort works
+The recruiter writes a job profile with the required and preferred qualifications. Kandisort reads each CV and cover letter, compares them with the job profile and gives each application a match score from 0 to 100 and a rank. Name, photo, address, date of birth and graduation years are removed before scoring. For each application Kandisort shows the five factors that contributed most to the score, for example years of relevant experience or a required certificate.
+
+Input data
+Kandisort accepts applications as PDF, DOCX, RTF or plain text files in Norwegian, Swedish, Danish and English. Applications that are scanned images, or written in other languages, get a low-confidence flag and must be read in full by a recruiter. The recruiter is responsible for a job profile that only contains requirements that are relevant to the position.
+
+Interpreting the output
+The match score shows how closely an application matches the job profile written by the recruiter. It is not a measure of the applicant's ability or suitability. A difference of less than 4 points between two applications is within normal variation and should not be used to order them. Accuracy is measured as top-quartile agreement with an expert panel of recruiters; the accuracy figures, the known limitations and the applicant groups for which Kandisort is less accurate are given in the section Accuracy, limitations and data.
+
+Changes and updates
+Tallvik releases model updates regularly.
+
+Resources and maintenance
+Kandisort runs as a cloud service in the EU and needs no local hardware; a current web browser is enough. Each model version is supported for 18 months after release.

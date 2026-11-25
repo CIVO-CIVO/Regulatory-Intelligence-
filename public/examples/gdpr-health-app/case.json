@@ -1,0 +1,84 @@
+{
+  "id": "gdpr-health-app",
+  "name": "Hodevarde app privacy (GDPR)",
+  "menu": "GDPR privacy for a health app",
+  "menuSub": "Norway (EEA), GDPR · 6 files · 2 pages",
+  "description": "A privacy notice for users of the Hodevarde migraine diary app and our internal personal data breach procedure, under the GDPR as it applies in Norway through the EEA Agreement (supervisory authority: Datatilsynet).",
+  "notice": "Example files loaded. The two GDPR excerpts are the real Official Journal text of Regulation (EU) 2016/679; the record of processing, processor register, security summary and DPIA summary are fictional.",
+  "files": [
+    { "path": "GDPR-principles-and-transparency.pdf", "label": "GDPR excerpt - principles, consent, transparency.pdf", "expectRole": "regulation" },
+    { "path": "GDPR-processors-security-breaches-transfers.pdf", "label": "GDPR excerpt - processors, security, breaches, transfers.pdf", "expectRole": "regulation" },
+    { "path": "Record-of-processing-activities-v3.2.pdf", "label": "Record of processing activities v3.2.pdf", "expectRole": "evidence" },
+    { "path": "Processor-and-transfer-register-v1.4.docx", "label": "Processor and transfer register v1.4.docx", "expectRole": "evidence" },
+    { "path": "Information-security-and-incident-response-summary.docx", "label": "Information security and incident response summary.docx", "expectRole": "evidence" },
+    { "path": "DPIA-summary-v2.2.txt", "label": "DPIA summary v2.2.txt", "expectRole": "evidence" }
+  ],
+  "pages": [
+    { "title": "Privacy notice", "path": "privacy-notice.txt" },
+    { "title": "Personal data breach procedure", "path": "breach-procedure.txt" }
+  ],
+  "demo": [
+    {
+      "page": "Privacy notice",
+      "do": "replace",
+      "find": "We process your diary data only with your explicit consent, which you give on a separate screen before you start the diary. You can withdraw your consent at any time in Settings, Privacy.",
+      "text": "We process your diary data on the basis of our legitimate interest in improving the app, so we do not ask for your consent.",
+      "say": "Marketing wants to drop the consent step. Change the legal basis for health data to legitimate interest.",
+      "expect": "Article 9(1) on health data turns red with a warning, and so do the Article 6 legal basis rules."
+    },
+    {
+      "page": "Privacy notice",
+      "do": "replace",
+      "find": "We process your diary data on the basis of our legitimate interest in improving the app, so we do not ask for your consent.",
+      "text": "We process your diary data only with your explicit consent. You give it on a separate consent screen, apart from the terms of use, and the box is not pre-ticked. You can withdraw your consent at any time in Settings, Privacy, as easily as you gave it, and this does not affect processing before the withdrawal.",
+      "say": "Write it properly: explicit consent on its own screen, not pre-ticked, easy to withdraw.",
+      "expect": "Article 9 turns green again, and the Article 7 consent rules (proof of consent, withdrawal) turn green."
+    },
+    {
+      "page": "Privacy notice",
+      "do": "replace",
+      "find": "We keep your diary data for as long as we find it useful, with no fixed deletion date.",
+      "text": "We keep your diary entries while your account is active. If you delete your account or withdraw your consent, we delete your diary entries within 30 days, and they are removed from our encrypted backups within a further 35 days.",
+      "say": "Replace \"as long as we find it useful\" with the real retention periods from the record of processing.",
+      "expect": "Storage limitation (Article 5(1)(e)) and the right to erasure (Article 17(1)) go from red to green."
+    },
+    {
+      "page": "Privacy notice",
+      "do": "replace",
+      "find": "All your data, including your messages to customer support, stays in the EU/EEA: we do not transfer personal data to countries outside the EU/EEA.",
+      "text": "Corvantis Inc. stores your messages to customer support in the United States. This transfer is based on the EU Standard Contractual Clauses, and you can ask our DPO for a copy. Your diary data is stored only in the EU/EEA.",
+      "say": "Fix the claim that no data leaves the EU/EEA: the processor register shows a US support platform.",
+      "expect": "The transfer rule (Article 44) goes from red to green, and the Article 46 safeguard rules appear in green."
+    },
+    {
+      "page": "Privacy notice",
+      "do": "append",
+      "text": "How we protect your data\nYour diary data is encrypted on your phone, in transit with TLS 1.3 and at rest in our database with AES-256. Your email address and your diary are stored in separate databases. Only two named engineers and our Head of Security can access production data, with multi-factor authentication, and every access is logged. We test restoring from backup every quarter, and an external penetration test is done every year.",
+      "say": "Paste a new paragraph about how the data is protected.",
+      "expect": "New Article 32 rules (encryption, regular testing) appear, rated green."
+    },
+    {
+      "page": "Personal data breach procedure",
+      "do": "replace",
+      "find": "within 7 days of the risk assessment",
+      "text": "without undue delay and, where feasible, no later than 72 hours after we become aware of the breach, and gives the reasons for any delay",
+      "say": "Switch to the breach procedure. Fix the deadline: 7 days becomes 72 hours from awareness.",
+      "expect": "The 72-hour rule (Article 33(1)) goes from red to green."
+    },
+    {
+      "page": "Personal data breach procedure",
+      "do": "replace",
+      "find": "within 72 hours of becoming aware of it",
+      "text": "without undue delay and no later than 24 hours after becoming aware of it, as our data processing agreements require",
+      "say": "Fix the processor deadline: the processor agreements say 24 hours, not 72.",
+      "expect": "The processor rule (Article 33(2)) goes from red to green: the page now matches the 24 hours in the processor register."
+    },
+    {
+      "page": "Personal data breach procedure",
+      "do": "delete",
+      "find": "Informing affected users\nWhen a breach is likely to result in a high risk to users, we inform the affected users without undue delay by email and in-app message. The message uses clear and plain language. It explains what happened, the likely consequences, what we have done and what users can do to protect themselves, and it gives the DPO's contact details.",
+      "say": "Delete the whole paragraph on informing affected users.",
+      "expect": "The rules on telling users about a breach (Article 34(1) and 34(2)) leave the list: they go neutral, not red."
+    }
+  ]
+}

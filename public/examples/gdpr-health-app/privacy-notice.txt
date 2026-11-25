@@ -1,0 +1,20 @@
+Who we are
+Hodevarde Health AS, Oslo, Norway, is the controller responsible for your personal data in the Hodevarde migraine diary app. Our data protection officer (DPO) answers all privacy questions at dpo@hodevarde.example. We show you this notice when you create your account, and you can read it at any time in Settings, Privacy.
+
+What we collect and why
+We use your email address, year of birth and country to create and run your account. The legal basis is our contract with you (Article 6(1)(b) GDPR). We use the app version, device model and crash reports to keep the app stable and secure, based on our legitimate interest in a working service (Article 6(1)(f) GDPR).
+
+Your diary and health data
+Your diary holds your migraine attacks, pain level, symptoms, medication, possible triggers and, if you choose, your menstrual cycle. This is health data, a special category of personal data. We process your diary data only with your explicit consent, which you give on a separate screen before you start the diary. You can withdraw your consent at any time in Settings, Privacy.
+
+Attack forecast
+The app estimates your risk of a migraine attack in the next 24 hours from your diary entries and the local weather. The forecast is calculated on your phone, is only a guide, and is never used to make decisions about you with legal or similarly significant effects.
+
+Who receives your data
+We use processors that handle your data only on our instructions: Kaldfjell Hosting AS (hosting, Norway), Brevlund Mail ApS (email, Denmark), Lumvik Analytics AB (crash reports, Sweden) and Corvantis Inc. (customer support platform). Inside Hodevarde, only staff who need your diary data for their work can see it, and they are bound by confidentiality. We never sell your data, and we never share diary data with employers, insurers or pharmaceutical companies. All your data, including your messages to customer support, stays in the EU/EEA: we do not transfer personal data to countries outside the EU/EEA.
+
+How long we keep your data
+We keep your diary data for as long as we find it useful, with no fixed deletion date. Account data is deleted within 30 days after you delete your account, and accounts with no login for 24 months are deleted after an email warning. Support messages are deleted 24 months after the case is closed, and crash reports after 90 days.
+
+Your rights
+You can ask for access to your data, correction, deletion, restriction and a copy in a portable format, and you can object to processing based on our legitimate interest. Write to dpo@hodevarde.example or use Settings, Privacy. We answer within one month.

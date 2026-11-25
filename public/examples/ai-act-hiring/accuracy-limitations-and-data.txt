@@ -1,0 +1,11 @@
+Accuracy
+Kandisort 2.4 was validated on 61,400 applications for 1,904 positions received in the first half of 2025, against rankings made by an expert panel of senior recruiters. In validation, Kandisort was 99% accurate for all applicants, regardless of age, gender or language.
+
+Known limitations
+Kandisort reads text only. CVs that are scanned images are not read, and CVs with two-column layouts or tables may be read incompletely. Kandisort is validated for 41 job families in logistics, retail, office administration, IT and health care support; for other roles the match score is not validated. Applications in Finnish, Icelandic or other unsupported languages are not scored reliably.
+
+Training data
+The model was trained on 1,862,400 applications for 48,215 positions advertised between January 2019 and December 2024 by 312 employers in Norway, Sweden and Denmark. The training data and the model outputs were examined for possible biases before release. Graduation year, which acted as a proxy for age, was removed, and 24,600 applications were re-labelled by an expert panel to reduce bias from historical shortlisting decisions.
+
+Robustness and cybersecurity
+Kandisort gives the same score when an application is uploaded again, and small changes in spelling or formatting change the score by less than 2 points. Hidden text, such as white keywords added to a CV, is detected and removed before scoring. Kandisort runs in an isolated EU cloud environment and is tested by an external security firm every year. Recruiter feedback is reviewed before it is used to train a new model version, so that manipulated feedback cannot change the model.

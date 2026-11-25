@@ -1,0 +1,17 @@
+Purpose and scope
+This procedure tells Hodevarde Health AS staff what to do when personal data is lost, destroyed, changed, disclosed or accessed without authorisation. It covers the app, the support back office and our processors. The Data Protection Officer (DPO) owns this procedure.
+
+Detecting and reporting a breach
+Any employee or contractor who suspects a personal data breach reports it at once to the on-call security lead on the security phone. Our processors, the companies that process personal data on our behalf, must notify us of a breach within 72 hours of becoming aware of it. We become aware of a breach when the security lead confirms that personal data is affected.
+
+Assessing the risk
+The security lead and the DPO assess the breach within 24 hours of awareness: which data, how many users, how likely misuse is and how severe the consequences could be for the users. A breach of diary data is treated as high risk.
+
+Notifying Datatilsynet
+If the breach is likely to result in a risk to the rights and freedoms of users, the DPO notifies Datatilsynet within 7 days of the risk assessment. The notification describes the nature of the breach, the categories and approximate number of users and records concerned, the DPO's contact details, the likely consequences and the measures taken or proposed. If we do not have all the information yet, we send what we have and add the rest later.
+
+Informing affected users
+When a breach is likely to result in a high risk to users, we inform the affected users without undue delay by email and in-app message. The message uses clear and plain language. It explains what happened, the likely consequences, what we have done and what users can do to protect themselves, and it gives the DPO's contact details.
+
+Breach log
+Every breach is recorded in the breach log, also breaches we do not notify: the facts, the effects, the notification decision with reasons, and the remedial action. The log is kept for 5 years and shown to Datatilsynet on request.

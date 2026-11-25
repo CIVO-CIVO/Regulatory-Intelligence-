@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { REQUIREMENTS_SYSTEM, requirementsSchema } from '../src/lib/server/prompts.ts';
 import { locateQuote } from '../src/lib/text.ts';
 
-const ex = new URL('../public/examples/', import.meta.url).pathname;
+const ex = new URL('../public/examples/flexiguard-510k/', import.meta.url).pathname;
 const sources = [
   { id: 'D1', name: '21 CFR 807 subpart E.pdf', text: readFileSync(ex + '21-CFR-807-subpart-E.txt', 'utf8') },
   { id: 'D2', name: 'FDA guidance - 510(k) format.txt', text: readFileSync(ex + 'FDA-guidance-510k-format-excerpt.txt', 'utf8') },

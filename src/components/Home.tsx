@@ -8,11 +8,20 @@ import AddSourceDialog, { type AddMode } from './AddSourceDialog';
 import { createProject, initialSteps, type Step } from '@/lib/client/build';
 import { IconAlert, IconArrowRight, IconCheck, IconDots, IconFile, IconFolder, IconFolderUp, IconLink, IconText, IconX, Spinner } from './Icons';
 
-const EXAMPLE = {
-  name: 'FlexiGuard 510(k)',
-  description:
-    'A traditional 510(k) premarket notification to the US FDA for the FlexiGuard FG-200 wound dressing (silicone contact layer and polyurethane foam).',
-};
+/** Example projects bundled in public/examples/<id>/case.json, listed in public/examples/index.json. */
+interface ExampleSummary {
+  id: string;
+  menu: string;
+  menuSub: string;
+}
+interface ExampleCase {
+  id: string;
+  name: string;
+  description: string;
+  notice: string;
+  files: { path: string; label: string }[];
+  pages: { title: string; path: string }[];
+}
 
 interface Status {
   ok: boolean | null;
@@ -42,9 +51,17 @@ export default function Home({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [status, setStatus] = useState<Status | null>(null);
-  const [exampleDraft, setExampleDraft] = useState<string | null>(null);
+  const [examples, setExamples] = useState<ExampleSummary[]>([]);
+  const [example, setExample] = useState<{ name: string; pages: { title: string; text: string }[] } | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/examples/index.json')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((x: ExampleSummary[]) => setExamples(Array.isArray(x) ? x : []))
+      .catch(() => setExamples([]));
+  }, []);
 
   useEffect(() => {
     fetch('/api/status?probe=1')
@@ -73,26 +90,29 @@ export default function Home({
     setNotice(bad.length ? `Skipped ${bad.map((f) => f.name).join(', ')}: use PDF, DOCX, XLSX, CSV or text files.` : null);
   };
 
-  const loadExample = async () => {
+  const loadExample = async (id: string) => {
     setMenu(false);
     setNotice(null);
     try {
-      const manifest = (await fetch('/examples/manifest.json').then((r) => r.json())) as { file: string; label: string }[];
-      const loaded = await Promise.all(
-        manifest.map(async (m) => {
-          const blob = await fetch(`/examples/${encodeURIComponent(m.file)}`).then((r) => {
-            if (!r.ok) throw new Error(m.file);
-            return r.blob();
-          });
-          return new File([blob], m.label, { type: blob.type });
+      const base = `/examples/${encodeURIComponent(id)}/`;
+      const get = async (path: string) => {
+        const r = await fetch(base + encodeURIComponent(path));
+        if (!r.ok) throw new Error(path);
+        return r;
+      };
+      const c = (await (await get('case.json')).json()) as ExampleCase;
+      const files = await Promise.all(
+        c.files.map(async (f) => {
+          const blob = await (await get(f.path)).blob();
+          return new File([blob], f.label, { type: blob.type });
         }),
       );
-      const draft = await fetch('/examples/draft.txt').then((r) => (r.ok ? r.text() : ''));
-      setName(EXAMPLE.name);
-      setDescription(EXAMPLE.description);
-      setSources(loaded.map((file) => ({ type: 'file' as const, file })));
-      setExampleDraft(draft);
-      setNotice('Example files loaded. The clinical, risk and labeling files are fictional; the CFR and FDA texts are real public documents.');
+      const pages = await Promise.all(c.pages.map(async (pg) => ({ title: pg.title, text: (await (await get(pg.path)).text()).trim() })));
+      setName(c.name);
+      setDescription(c.description);
+      setSources(files.map((file) => ({ type: 'file' as const, file })));
+      setExample({ name: c.name, pages });
+      setNotice(c.notice);
     } catch {
       setNotice('The example files could not be loaded.');
     }
@@ -104,7 +124,11 @@ export default function Home({
     setSteps(initialSteps());
     try {
       const project = await createProject({ name: name || 'Untitled project', description, sources }, setSteps);
-      if (exampleDraft && name === EXAMPLE.name) project.pages = [{ ...project.pages[0], text: exampleDraft }];
+      // An example keeps its draft pages unless the user renamed the project.
+      if (example && name === example.name && example.pages.length) {
+        project.pages = example.pages.map((pg, i) => ({ id: `P${i + 1}`, title: pg.title, text: pg.text }));
+        project.activePageId = 'P1';
+      }
       onCreated(project);
     } catch (err) {
       setError((err as Error).message);
@@ -130,11 +154,14 @@ export default function Home({
               <IconDots />
             </button>
             {menu && (
-              <div className="absolute right-0 z-20 mt-2 w-72 overflow-hidden rounded-xl border border-line bg-panel-2 py-1.5 shadow-2xl">
-                <button type="button" onClick={loadExample} disabled={building} className="block w-full px-4 py-2.5 text-left text-[14px] hover:bg-raise disabled:opacity-50">
-                  Try the example project
-                  <span className="mt-0.5 block text-[12px] text-muted">FDA 510(k) for a wound dressing, six files</span>
-                </button>
+              <div className="absolute right-0 z-20 mt-2 w-80 overflow-hidden rounded-xl border border-line bg-panel-2 py-1.5 shadow-2xl">
+                {examples.length > 0 && <div className="px-4 pb-1 pt-1.5 text-[11.5px] uppercase tracking-wide text-faint">Try an example project</div>}
+                {examples.map((x) => (
+                  <button key={x.id} type="button" onClick={() => void loadExample(x.id)} disabled={building} className="block w-full px-4 py-2 text-left text-[14px] hover:bg-raise disabled:opacity-50">
+                    {x.menu}
+                    <span className="mt-0.5 block text-[12px] text-muted">{x.menuSub}</span>
+                  </button>
+                ))}
                 {projects.length > 0 && <div className="mx-4 my-1.5 border-t border-line" />}
                 {projects.slice(0, 8).map((p) => (
                   <button key={p.id} type="button" onClick={() => onOpen(p.id)} className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-[14px] hover:bg-raise">

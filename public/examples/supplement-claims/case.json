@@ -1,0 +1,117 @@
+{
+  "id": "supplement-claims",
+  "name": "Stillnora Evening Calm labeling",
+  "menu": "US supplement label and claims",
+  "menuSub": "US FDA, 21 CFR 101 · 6 files · 3 pages",
+  "description": "Label copy, product web page and social media posts for Stillnora Evening Calm, a magnesium and L-theanine sleep-support dietary supplement sold in the US, with structure/function claims under DSHEA (21 CFR 101.93) and a Supplement Facts panel (21 CFR 101.36).",
+  "notice": "Example files loaded. The three 21 CFR texts (101.3, 101.36 and 101.93) are real public regulations from eCFR; the product specification, FDA notification letter and substantiation summary are fictional.",
+  "files": [
+    {
+      "path": "21-CFR-101-93.pdf",
+      "label": "21 CFR 101.93 dietary supplement statements.pdf",
+      "expectRole": "regulation"
+    },
+    {
+      "path": "21-CFR-101-36.pdf",
+      "label": "21 CFR 101.36 Supplement Facts labeling.pdf",
+      "expectRole": "regulation"
+    },
+    {
+      "path": "21-CFR-101-3.pdf",
+      "label": "21 CFR 101.3 identity labeling.pdf",
+      "expectRole": "regulation"
+    },
+    {
+      "path": "Product-specification-FPS-SN-EC-001-rev-C.docx",
+      "label": "Product specification FPS-SN-EC-001 rev C.docx",
+      "expectRole": "evidence"
+    },
+    {
+      "path": "FDA-notification-letter-TN-REG-2026-014.pdf",
+      "label": "FDA notification letter TN-REG-2026-014.pdf",
+      "expectRole": "evidence"
+    },
+    {
+      "path": "Substantiation-summary-SUB-SN-EC-001.pdf",
+      "label": "Substantiation summary SUB-SN-EC-001 v2.1.pdf",
+      "expectRole": "evidence"
+    }
+  ],
+  "pages": [
+    {
+      "title": "Label copy",
+      "path": "label-copy.txt"
+    },
+    {
+      "title": "Product web page",
+      "path": "product-web-page.txt"
+    },
+    {
+      "title": "Social media posts",
+      "path": "social-media-posts.txt"
+    }
+  ],
+  "demo": [
+    {
+      "page": "Label copy",
+      "do": "replace",
+      "find": "L-Theanine 400 mg, marked †.",
+      "text": "L-Theanine 200 mg, marked †.",
+      "say": "On the label, correct L-theanine from 400 mg to 200 mg, the amount in the product specification.",
+      "expect": "The Supplement Facts amount rules go from red to green."
+    },
+    {
+      "page": "Label copy",
+      "do": "delete",
+      "find": "Supplement Facts panel\nServing Size 2 Capsules. Servings Per Container 30.\nAmount Per Serving, with % Daily Value in the right column.\nVitamin B6 (as pyridoxine hydrochloride) 2 mg, 118%.\nMagnesium (as magnesium bisglycinate) 120 mg, 29%.\nL-Theanine 200 mg, marked †.\nLemon balm (Melissa officinalis) leaf extract 150 mg, marked †.\nFootnote: † Daily Value not established.\nOther ingredients: hypromellose (vegetable capsule), microcrystalline cellulose, magnesium stearate.",
+      "say": "Delete the whole Supplement Facts paragraph.",
+      "expect": "The detailed Supplement Facts rules leave the list (neutral). The rule that a label must carry a Supplement Facts panel can turn red: the label no longer has one."
+    },
+    {
+      "page": "Product web page",
+      "do": "insert-after",
+      "find": "than those who took a placebo.",
+      "text": " That makes Stillnora Evening Calm clinically proven to cure insomnia.",
+      "say": "On the web page, add a sentence that says the product is clinically proven to cure insomnia.",
+      "expect": "The disease claim rules (21 CFR 101.93(g)) turn red with a warning."
+    },
+    {
+      "page": "Product web page",
+      "do": "replace",
+      "find": " That makes Stillnora Evening Calm clinically proven to cure insomnia.",
+      "text": " In short, Stillnora Evening Calm supports restful sleep in healthy adults.*",
+      "say": "Rewrite it as a structure/function claim: supports restful sleep.",
+      "expect": "The disease claim rules turn green again or leave the list."
+    },
+    {
+      "page": "Product web page",
+      "do": "replace",
+      "find": "*These statements have not been reviewed by the FDA. Individual results may vary.",
+      "text": "*These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.",
+      "say": "Replace the home-made disclaimer with the exact text from 21 CFR 101.93(c)(2).",
+      "expect": "The disclaimer rule (21 CFR 101.93(c)(2)) goes from red to green."
+    },
+    {
+      "page": "Product web page",
+      "do": "delete",
+      "find": "Supports healthy cortisol levels and stress resilience during the workday.* ",
+      "say": "Delete the cortisol claim. FDA was never notified of it and the substantiation file rejects it.",
+      "expect": "The disease-suggestion rule turns green, and the permitted-claims rule follows."
+    },
+    {
+      "page": "Social media posts",
+      "do": "replace",
+      "find": "Our formula is FDA approved, so you know it is safe and that it works. It pairs magnesium with L-theanine and lemon balm.",
+      "text": "Our formula pairs magnesium with L-theanine and lemon balm, and every batch is tested by an independent laboratory.",
+      "say": "On the social media page, remove the \"FDA approved\" sentence from post 2.",
+      "expect": "The red rule on this page turns green, and most amber rules turn green with it."
+    },
+    {
+      "page": "Product web page",
+      "do": "append",
+      "text": "Our notification to FDA\nTunravn Nutrition sent FDA's Office of Dietary Supplement Programs a 30-day notification for Stillnora Evening Calm on 26 May 2026, 22 days after the product first went on sale. The notice listed our name and address, the product name and the exact wording we use on the label and on this page. Our chief executive officer signed it and certified that we hold substantiation that this wording is truthful and not misleading.",
+      "say": "Paste a new paragraph about the 30-day notification to FDA.",
+      "expect": "New rules about the notification (21 CFR 101.93(a)) appear and are rated green."
+    }
+  ]
+}

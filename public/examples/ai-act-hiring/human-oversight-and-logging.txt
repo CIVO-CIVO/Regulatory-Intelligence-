@@ -1,0 +1,17 @@
+Role of the recruiter
+Kandisort supports recruiters; it does not make hiring decisions. For every application the recruiter sees the match score, the rank and the five main factors. The recruiter can move any application up or down the list, invite any applicant to interview whatever the rank, and mark a ranking as wrong with a reason.
+
+Who may oversee Kandisort
+The deployer must assign oversight to recruiters who have completed the Kandisort oversight training (45 minutes, with a final test) and who have the authority to invite any applicant to interview. The training covers what the match score means and the known limitations of Kandisort.
+
+Automation bias
+The training explains the risk of relying too much on the ranking.
+
+Stopping Kandisort
+An administrator at the deployer can pause Kandisort for one position or for the whole account at any time with the Pause ranking button. While Kandisort is paused, applications are shown in the order they were received, without scores.
+
+Logging
+Kandisort automatically records every ranking run: the date and time, the position, the job profile version, the model version, the match score and rank given to each application, and every action a recruiter takes, including overrides. Deployers can export the ranking logs from the Audit log page as CSV or JSON files. The ranking logs are deleted after 7 days to limit the storage of applicant data.
+
+Monitoring and serious incidents
+Deployers should check the Monitoring page every month and tell Tallvik when an alert appears. Deployers do not need to report serious incidents to Tallvik, because Tallvik monitors all deployer accounts itself.

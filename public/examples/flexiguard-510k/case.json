@@ -1,0 +1,101 @@
+{
+  "id": "flexiguard-510k",
+  "name": "FlexiGuard 510(k)",
+  "menu": "FDA 510(k) for a wound dressing",
+  "menuSub": "US FDA, 21 CFR 807 · 6 files · 1 page",
+  "description": "A traditional 510(k) premarket notification to the US FDA for the FlexiGuard FG-200 wound dressing (silicone contact layer and polyurethane foam).",
+  "notice": "Example files loaded. The clinical, risk and labeling files are fictional; the CFR and FDA texts are real public documents.",
+  "files": [
+    {
+      "path": "21-CFR-807-subpart-E.pdf",
+      "label": "21 CFR 807 subpart E.pdf",
+      "expectRole": "regulation"
+    },
+    {
+      "path": "FDA-guidance-510k-format-excerpt.txt",
+      "label": "FDA guidance - 510(k) format.txt",
+      "expectRole": "guidance"
+    },
+    {
+      "path": "ISO-10993-1-summary-internal.txt",
+      "label": "ISO 10993-1 summary.txt",
+      "expectRole": "standard"
+    },
+    {
+      "path": "Clinical-study-report-v3.pdf",
+      "label": "Clinical study report v3.pdf",
+      "expectRole": "evidence"
+    },
+    {
+      "path": "Risk-management-file.docx",
+      "label": "Risk management file.docx",
+      "expectRole": "evidence"
+    },
+    {
+      "path": "Labeling-draft.docx",
+      "label": "Labeling draft.docx"
+    }
+  ],
+  "pages": [
+    {
+      "title": "Submission draft",
+      "path": "draft.txt"
+    }
+  ],
+  "demo": [
+    {
+      "page": "Submission draft",
+      "do": "insert-after",
+      "find": "The label includes warnings and instructions for use.",
+      "text": " Because the 510(k) has been submitted, our brochure will call the FlexiGuard FG-200 an FDA approved dressing.",
+      "say": "Add a sentence that calls the device FDA approved.",
+      "expect": "The rule against official-approval claims (21 CFR 807.97) turns red with a warning."
+    },
+    {
+      "page": "Submission draft",
+      "do": "replace",
+      "find": " Because the 510(k) has been submitted, our brochure will call the FlexiGuard FG-200 an FDA approved dressing.",
+      "text": " Once FDA finds the device substantially equivalent, our brochure will describe it as 510(k) cleared, never as FDA approved.",
+      "say": "Rewrite it the correct way: 510(k) cleared, never FDA approved.",
+      "expect": "The same rule turns green."
+    },
+    {
+      "page": "Submission draft",
+      "do": "replace",
+      "find": "Testing per ISO 10993-1 included cytotoxicity and sensitization.",
+      "text": "Testing on the final finished, ethylene oxide sterilized device covered cytotoxicity (ISO 10993-5), sensitization (ISO 10993-10) and intracutaneous reactivity (ISO 10993-23). Acute systemic toxicity, material-mediated pyrogenicity, subacute toxicity and genotoxicity were addressed by chemical characterization with a toxicological risk assessment.",
+      "say": "Fill the biocompatibility gap: name every endpoint from the ISO summary.",
+      "expect": "Biocompatibility rules (the ISO 10993 endpoints, testing on the final finished device) appear or go from amber to green."
+    },
+    {
+      "page": "Submission draft",
+      "do": "replace",
+      "find": "reported 2 device-related adverse events",
+      "text": "reported no device-related adverse events",
+      "say": "Change a number so it no longer matches the clinical study report (it reports 2 device-related events).",
+      "expect": "Several rules turn red with a warning, among them the clinical and performance test rules: the page now contradicts the clinical study report."
+    },
+    {
+      "page": "Submission draft",
+      "do": "delete",
+      "find": "Substantial equivalence\nThe predicate device is K123456.",
+      "say": "Delete the whole substantial equivalence paragraph.",
+      "expect": "The predicate rules leave the list: the page is no longer about them, so they go neutral."
+    },
+    {
+      "page": "Submission draft",
+      "do": "append",
+      "text": "Sterility and shelf life\nThe dressing is sterilized with ethylene oxide to a sterility assurance level of 10^-6. The shelf life is 3 years from the date of manufacture, and the use-by date is printed on each pouch and carton.",
+      "say": "Paste a new paragraph about sterility and shelf life.",
+      "expect": "New rules about sterility and shelf life appear. Sterility is green; shelf life can show red until the test method is named."
+    },
+    {
+      "page": "Submission draft",
+      "do": "insert-after",
+      "find": "printed on each pouch and carton.",
+      "text": " The shelf life is supported by accelerated aging per ASTM F1980 followed by package integrity and seal strength testing, with real-time aging studies ongoing.",
+      "say": "Add how the shelf life was tested.",
+      "expect": "The shelf-life method rule turns green."
+    }
+  ]
+}

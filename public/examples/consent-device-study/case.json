@@ -1,0 +1,114 @@
+{
+  "id": "consent-device-study",
+  "name": "VARDE-1 informed consent form",
+  "menu": "Consent form for a device study",
+  "menuSub": "US FDA, 21 CFR 50 · 5 files · 3 pages",
+  "description": "Master informed consent form (version 3.0) for VARDE-1, a US pivotal IDE study of the GlucoVarde 180 implantable continuous glucose sensor, written in plain language for adult participants.",
+  "notice": "Example files loaded. 21 CFR 50.20, 50.25 and 50.27 (Part 50 Subpart B) and 21 CFR 812.7 are real public texts from the eCFR; the investigation plan synopsis, investigator's brochure and IRB letter are fictional.",
+  "files": [
+    {
+      "path": "21-CFR-50-subpart-B-excerpt.pdf",
+      "label": "21 CFR 50 subpart B excerpt.pdf",
+      "expectRole": "regulation"
+    },
+    {
+      "path": "21-CFR-812-7.pdf",
+      "label": "21 CFR 812.7.pdf",
+      "expectRole": "regulation"
+    },
+    {
+      "path": "CIP-synopsis-VARDE-1-v3.pdf",
+      "label": "CIP synopsis VARDE-1 v3.0.pdf",
+      "expectRole": "evidence"
+    },
+    {
+      "path": "Investigators-brochure-section-6-v4.docx",
+      "label": "Investigator's brochure section 6 v4.0.docx",
+      "expectRole": "evidence"
+    },
+    {
+      "path": "IRB-approval-letter-KP-2026-0418.pdf",
+      "label": "IRB approval letter KP-2026-0418.pdf",
+      "expectRole": "evidence"
+    }
+  ],
+  "pages": [
+    {
+      "title": "Study overview and procedures",
+      "path": "page-1-overview.txt"
+    },
+    {
+      "title": "Risks, benefits and alternatives",
+      "path": "page-2-risks.txt"
+    },
+    {
+      "title": "Your rights, costs and contacts",
+      "path": "page-3-rights.txt"
+    }
+  ],
+  "demo": [
+    {
+      "page": "Risks, benefits and alternatives",
+      "do": "insert-after",
+      "find": "Talk to the study doctor if this happens.",
+      "text": " By signing this form, you agree not to make any claim against Isbrann Medical AS, the study doctor or the hospital for an injury caused by the sensor.",
+      "say": "On the risks page, add a sentence where the participant gives up the right to make a claim.",
+      "expect": "The rule against exculpatory language (21 CFR 50.20) turns red with a warning."
+    },
+    {
+      "page": "Risks, benefits and alternatives",
+      "do": "replace",
+      "find": "If you are hurt because of the study, Isbrann Medical AS may help with some of the costs. Talk to the study doctor if this happens. By signing this form, you agree not to make any claim against Isbrann Medical AS, the study doctor or the hospital for an injury caused by the sensor.",
+      "text": "If you are injured as a direct result of the GlucoVarde 180 sensor or a procedure done for this study, the study doctor will give you medical treatment or arrange it for you. Isbrann Medical AS will pay the reasonable costs of this treatment that are not paid by your health insurance or another third party. You will not have to pay these costs yourself. Isbrann Medical AS will not pay for lost wages, pain or other losses. Signing this form does not take away any of your legal rights. To report an injury, call the VARDE-1 study line at 1-555-0142.",
+      "say": "Replace the whole injury paragraph with the research-injury language the IRB approved.",
+      "expect": "The exculpatory language rule turns green, and so does the rule on compensation and treatment for injury (50.25(a)(6))."
+    },
+    {
+      "page": "Risks, benefits and alternatives",
+      "do": "replace",
+      "find": "The GlucoVarde 180 is safe and gives more accurate readings than the continuous glucose monitor you wear on your skin today.",
+      "text": "You may not benefit from being in this study. We do not yet know how safe or how accurate the GlucoVarde 180 is; that is what this study will find out.",
+      "say": "Remove the claim that the sensor is safe and more accurate.",
+      "expect": "The rule against calling an investigational device safe or effective (21 CFR 812.7(d)) and the benefits rule turn green."
+    },
+    {
+      "page": "Risks, benefits and alternatives",
+      "do": "replace",
+      "find": "Infection at the insertion site happens in fewer than 1 in 500 people",
+      "text": "Infection at the insertion site happens in about 1 in 80 people",
+      "say": "Correct the infection rate to the one in the investigator's brochure (about 1 in 80).",
+      "expect": "The risk description rule goes from red to green: the rate now matches the project facts."
+    },
+    {
+      "page": "Risks, benefits and alternatives",
+      "do": "delete",
+      "find": "What other choices do I have?\nYou do not have to take part in this study to manage your diabetes. Other choices include finger-stick meters and continuous glucose monitors that FDA has already cleared, which you wear on the skin. Your own doctor can talk with you about these choices.",
+      "say": "Delete the whole paragraph about other choices.",
+      "expect": "The alternatives rule (50.25(a)(4)) leaves the list: the page no longer deals with it, so it goes neutral."
+    },
+    {
+      "page": "Your rights, costs and contacts",
+      "do": "replace",
+      "find": "Once the sensor is implanted, you cannot leave the study until it is removed at the day 180 visit.",
+      "text": "You can leave the study at any time, also after the sensor has been implanted, without penalty or loss of benefits. If you leave, we will offer you a removal visit so the study doctor can take the sensor out safely. You do not have to come to that visit.",
+      "say": "Go to the rights page and fix the sentence that says you cannot leave once the sensor is implanted.",
+      "expect": "The voluntary participation rule (50.25(a)(8)) and the withdrawal rule (50.25(b)(4)) go from red to green."
+    },
+    {
+      "page": "Your rights, costs and contacts",
+      "do": "insert-after",
+      "find": "that might change your mind about staying in it.",
+      "text": "\n\nIs this study listed online?\nA description of this clinical trial will be available on http://www.ClinicalTrials.gov, as required by U.S. Law. This Web site will not include information that can identify you. At most, the Web site will include a summary of the results. You can search this Web site at any time.",
+      "say": "Paste the ClinicalTrials.gov statement the regulation requires, word for word.",
+      "expect": "A new rule on the ClinicalTrials.gov statement (50.25(c)) appears and is green."
+    },
+    {
+      "page": "Study overview and procedures",
+      "do": "replace",
+      "find": "come to 6 clinic visits",
+      "text": "come to 11 clinic visits",
+      "say": "On the overview page, correct the number of clinic visits to the 11 in the investigation plan.",
+      "expect": "The duration and procedures rule (50.25(a)(1)) goes from red to green: the visit count now matches the plan."
+    }
+  ]
+}

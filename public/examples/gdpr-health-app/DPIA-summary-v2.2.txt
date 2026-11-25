@@ -1,0 +1,70 @@
+FICTIONAL EXAMPLE DOCUMENT FOR SOFTWARE DEMONSTRATION. Hodevarde Health AS is an invented company.
+
+HODEVARDE HEALTH AS
+DATA PROTECTION IMPACT ASSESSMENT (DPIA): SUMMARY
+Hodevarde migraine diary app
+
+Document ID: HV-DP-DPIA-001
+Version: 2.2
+Date: 30 September 2026
+Owner: Data Protection Officer
+Contributors: Chief Technology Officer, Head of Security, Product Lead, Medical Adviser (neurologist, external)
+Approved by: Chief Executive Officer, 6 October 2026
+Status: Approved. Next review September 2027 or before any major change to the app.
+
+
+1. WHY A DPIA WAS DONE
+
+1.1 The Hodevarde app processes health data (migraine attacks, symptoms, medication, menstrual cycle) of tens of thousands of users. This is large-scale processing of special categories of personal data. A DPIA is therefore required before and during the processing.
+
+1.2 Version 2.2 covers the new consent screen CS-3 (May 2026), the move of the attack forecast to on-device processing (June 2026), and the new customer support platform in the United States (September 2026, assessed in section 6).
+
+
+2. DESCRIPTION OF THE PROCESSING
+
+2.1 Users record migraine attacks and related data in a diary. The app shows patterns, a monthly report the user can share with their doctor as a PDF, and a 24-hour attack forecast.
+
+2.2 Legal basis for diary data: explicit consent (GDPR Article 9(2)(a)), collected on a separate consent screen, not pre-ticked, separate from the terms of use. The DPO rejected a proposal from 2025 to rely on legitimate interest for diary data, because legitimate interest is not a condition for processing health data under Article 9(2).
+
+2.3 Data flow: phone (encrypted app container), back end at Kaldfjell Hosting AS in Norway (encrypted database, separate databases for identity and diary), encrypted backups in a second data centre in Norway. Support tickets go to Corvantis Inc. in the United States. Crash reports go to Lumvik Analytics AB in Sweden. Diary data does not go to the support platform or to the crash reporting service.
+
+
+3. NECESSITY AND PROPORTIONALITY
+
+3.1 Data minimisation: no full date of birth (year only), no name required, no precise location (only municipality for the weather), menstrual cycle tracking is optional and off by default.
+
+3.2 Storage limitation: diary entries are kept while the account is active and deleted within 30 days after account deletion or consent withdrawal; backups roll over in 35 days; inactive accounts are deleted after 24 months without login.
+
+3.3 Transparency: the privacy notice must name the controller and the DPO, explain each purpose and legal basis, the recipients, the transfer to the United States, the retention periods, the user's rights including the right to withdraw consent and to complain to Datatilsynet.
+
+
+4. AUTOMATED PROCESSING: ATTACK FORECAST
+
+4.1 The forecast combines the user's own diary history with the local weather forecast. Since June 2026 it runs on the user's phone and the result is not sent to us. It is a guide for the user only and does not produce decisions with legal or similarly significant effects. Article 22 does not apply. The privacy notice explains the logic in plain language.
+
+
+5. RISKS AND MEASURES
+
+R1 Unauthorised access to diary data. Before measures: high. Measures: AES-256 encryption at rest, separate identity and diary databases, production access for two named engineers only, multi-factor authentication, access logging. Residual risk: low.
+
+R2 Diary data used for other purposes (advertising, sale, insurers). Before measures: medium. Measures: purpose limitation in policy and contracts, no advertising SDKs in the app, DPO review of every new feature. Residual risk: low.
+
+R3 Health details in support tickets sent to the United States. Before measures: medium. Measures: ticket form warning, automatic redaction, SCCs and TIA-2026-01, deletion 24 months after closure. Residual risk: low.
+
+R4 Consent not freely given or not informed. Before measures: medium. Measures: separate consent screen CS-3, unticked box, consent covers the diary only, withdrawal in two taps. Residual risk: low.
+
+R5 Late or missing breach notification. Before measures: medium. Measures: incident response plan HV-SEC-IRP-001 with risk assessment within 24 hours, notification to Datatilsynet within 72 hours of awareness, breach exercise every 6 months. Residual risk: low.
+
+R6 Data kept too long. Before measures: medium. Measures: automatic deletion jobs, quarterly deletion report to the DPO. Residual risk: low.
+
+
+6. TRANSFER TO THE UNITED STATES (CUSTOMER SUPPORT)
+
+6.1 Since 9 September 2026 customer support uses Corvantis Inc., which stores support tickets in the United States. Personal data therefore leaves the EU/EEA. Transfer tool: EU Standard Contractual Clauses (module 2). The transfer impact assessment TIA-2026-01 concludes that, with the supplementary measures, the residual risk is low. The privacy notice must say that support data is transferred to the United States and on what basis.
+
+
+7. CONCLUSION AND DPO OPINION
+
+7.1 With the measures above, the residual risks are low and the processing can continue. Prior consultation with Datatilsynet under Article 36 is not needed.
+
+7.2 DPO opinion (30 September 2026): agree with the conclusion. Two open actions: (1) update the privacy notice for the transfer of support data to the United States, owner Product Lead, due 1 December 2026; (2) align the personal data breach procedure with the 72-hour notification time in HV-SEC-POL-004, owner DPO, due 1 December 2026.
