@@ -1,6 +1,6 @@
 # Regulatory Intelligence: demo guide
 
-Five example projects with real regulation texts and realistic (clearly labelled fictional) company files. Each has a tested demo script: the edits below were run on the real engine (Jev and the language model) and produced the changes described.
+Your own CardioTrace project (ready to open, no build) and five example projects with real regulation texts and realistic (clearly labelled fictional) company files. Each has a tested demo script: the edits below were run on the real engine (Jev and the language model) and produced the changes described.
 
 ## Before you start
 
@@ -11,6 +11,70 @@ Five example projects with real regulation texts and realistic (clearly labelled
 - Click any rule to show the exact quote from the regulation, how Jev judges it, and the probabilities. "Show the exact Jev questions" shows what was sent.
 - The steps are cumulative: do them in order on a fresh copy of the example. To start over, create the example project again.
 - Scores move a few points from one build to the next. The red and green changes in the steps held in repeated test runs, on fresh builds and on the live site.
+
+## CardioTrace compliance (your own project)
+
+Your own project, published with the app: it is already in the project list on any device that opens the link, rebuilt with the current engine (457 rules from 21 CFR 812, 21 CFR 814 and 45 CFR 164) and with every page already checked, so it opens at once without a build. The CardioX dossier, test paragraphs and answer key are fictional test data.
+
+**Files**
+
+- Rules: CFR-2025-title21-vol8-part812.pdf (21 CFR 812, IDE)
+- Rules: CFR-2025-title21-vol8-part814.pdf (21 CFR 814, PMA)
+- Rules: CFR-2025-title45-vol2-part164.pdf (45 CFR 164, HIPAA)
+- Project facts: CardioX_Offline_Regulatory_Dossier.txt (the full dossier, so claims are compared with it)
+
+**Starting point** (as published)
+
+| Page | Relevant rules | Green | Amber | Red |
+|---|---|---|---|---|
+| Submission draft (the launch brochure, test 8A) | 21 | 0 | 0 | 21 |
+| CardioX_Offline_Regulatory_Dossier | 52 | 36 | 15 | 1 |
+| CardioX_Offline_Test_Paragraphs (all 12 A and B tests at once) | 112 | 18 | 58 | 36 |
+| CardioX_Test_Answer_Key | 41 | 33 | 8 | 0 |
+
+Open the project from "Your projects" on the front page. It opens on "Submission draft". All demo steps are on that page; the test paragraphs come from your CardioX_Offline_Test_Paragraphs file.
+
+**Demo steps**
+
+1. **Replace the brochure (test 8A) with the corrected status statement (test 8B): PMA filed and under review, not approved.**
+
+- Replace the paragraph starting "Asterion's launch brochure states: “CardioX has been fully FDA approved for commercial sa…" with the B text of the same test: "Asterion's internal training statement says: “CardioX is a fictional investigational implantable cardiac rhythm monitor being studied under a simulated approved IDE. The fictional PMA CX-PMA-0007 has been accepted for f…"
+- You should see: The approval-status and promotion rules go from red to green.
+
+2. **Paste test 2A: one shared password, audit logging switched off.**
+
+- Paste at the end: "Addendum: ePHI access and audit controls Because the CardioX trial database has grown, the sponsor's information technology team will replace individual user accounts with one shared password distributed to investigator…"
+- You should see: HIPAA security rules (access control, audit controls, risk analysis) appear in red with warnings.
+
+3. **Replace it with test 2B: individual accounts, audit controls, documented risk analysis.**
+
+- Replace the paragraph starting "Because the CardioX trial database has grown, the sponsor's information technology team w…" with the B text of the same test: "The CardioX data environment will continue to use individually assigned accounts, access authorization appropriate to each role, technical audit controls, periodic review of permissions, secure remote access procedures,…"
+- You should see: The same HIPAA security rules turn green.
+
+4. **Paste test 6A: a serious device-related injury that the sponsor will not report until the trial ends.**
+
+- Paste at the end: "Addendum: unanticipated adverse device effect Asterion's safety group has received a new report that a CardioX sensor migrated and damaged nearby tissue in a study participant, requiring surgery. The investigator believ…"
+- You should see: The IDE reporting rules (unanticipated adverse device effects, 812.46 and 812.150) appear in red with warnings.
+
+5. **Replace it with test 6B: report and evaluate the effect on time.**
+
+- Replace the paragraph starting "Asterion's safety group has received a new report that a CardioX sensor migrated and dama…" with the B text of the same test: "When a suspected unanticipated adverse device effect occurs in a CardioX participant, the investigator will ensure prompt medical care, preserve the clinical and device records, and report the event to the sponsor and r…"
+- You should see: The reporting rules turn green.
+
+6. **Paste test 11A: postapproval duties described as if the PMA were already approved.**
+
+- Paste at the end: "Addendum: postapproval duties Asterion's regulatory status dashboard reports that CardioX received final FDA PMA approval on 5 November 2026 because FDA accepted the application for filing. The dashboard automatically m…"
+- You should see: PMA approval-status rules (814.42, 814.44, 814.80 to 814.84) turn red: filed is not approved.
+
+7. **Replace it with test 11B: submission, approval and follow-up kept separate.**
+
+- Replace the paragraph starting "Asterion's regulatory status dashboard reports that CardioX received final FDA PMA approv…" with the B text of the same test: "The CardioX regulatory dashboard lists three distinct statuses: “IDE approved for the defined clinical investigations,” “IRB permissions documented by participating site and protocol version,” and “PMA filed but not app…"
+- You should see: The approval-status rules turn green or amber.
+
+8. **Delete the whole ePHI addendum.**
+
+- Delete the paragraph "Addendum: ePHI access and audit controls The CardioX data environment will continue to use individually assigned accoun…"
+- You should see: The HIPAA security rules leave the list: the page is no longer about them, so they go neutral.
 
 ## Hodevarde app privacy (GDPR)
 
@@ -235,7 +299,7 @@ Example files loaded. 21 CFR 50.20, 50.25 and 50.27 (Part 50 Subpart B) and 21 C
 |---|---|---|---|---|
 | Study overview and procedures | 10 | 6 | 3 | 1 |
 | Risks, benefits and alternatives | 9 | 4 | 0 | 5 |
-| Your rights, costs and contacts | 16 | 11 | 2 | 3 |
+| Your rights, costs and contacts | 16 | 10 | 3 | 3 |
 
 Red at the start: Research purpose and procedures (§ 50.25(a)(1)); Research purpose and procedures (§ 50.25(a)(1)); Foreseeable risks described (§ 50.25(a)(2)); Expected benefits described (§ 50.25(a)(3)); Contact persons identified (§ 50.25(a)(7)); No safety or efficacy claims (§ 812.7(d)); Research purpose and procedures (§ 50.25(a)(1)); Voluntary participation statement (§ 50.25(a)(8)).
 
