@@ -1,0 +1,9 @@
+[
+  {
+    "id": "q28qcmvzfpkp",
+    "version": 1,
+    "file": "cardiotrace-compliance.json",
+    "name": "CardioTrace compliance",
+    "replaceIfNotNewerThan": 1795694572222
+  }
+]

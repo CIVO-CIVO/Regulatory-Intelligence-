@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Project, ProjectSummary } from '@/lib/types';
-import { deleteProject, listProjects, loadProject, saveProject } from '@/lib/client/store';
+import { deleteProject, listProjects, loadProject, saveProject, seedProjects } from '@/lib/client/store';
 import Home from './Home';
 import Workspace from './Workspace';
 
@@ -39,6 +39,11 @@ export default function App() {
       const id = new URL(window.location.href).searchParams.get('p');
       if (id) await open(id);
       setBooted(true);
+      // Projects published with the app (the owner's demo projects) are added once, in the background.
+      if (await seedProjects()) {
+        await refreshList();
+        if (id && !latest.current) await open(id);
+      }
     })();
   }, [open, refreshList]);
 

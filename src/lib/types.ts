@@ -175,6 +175,8 @@ export interface Project {
   checkedDraft?: string;
   /** Which engines produced the analysis (shown in the UI, never hidden). */
   engines?: { llm: string; jev: string };
+  /** Set when the project came from public/seed (published with the app); `at` = when it was added here. */
+  seed?: { version: number; at: number };
 }
 
 export interface PageText {

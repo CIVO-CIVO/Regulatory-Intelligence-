@@ -9,12 +9,11 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { extractRules, groupCategories, writeCriteria, checkPage } from '../src/lib/server/pipeline.ts';
-import { llmObject } from '../src/lib/server/ai.ts';
-import { CLASSIFY_SYSTEM, classifySchema } from '../src/lib/server/prompts.ts';
+import { checkPage } from '../src/lib/server/pipeline.ts';
 import { selectFacts } from '../src/lib/rules.ts';
-import { splitDocument, countWords, hash } from '../src/lib/text.ts';
-import { SOURCE_ROLES, type DocRole, type Requirement, type RuleCheck } from '../src/lib/types.ts';
+import { countWords, hash } from '../src/lib/text.ts';
+import type { DocRole, Requirement, RuleCheck } from '../src/lib/types.ts';
+import { buildRules, classifyDocs, readDoc } from './lib/engine.mts';
 
 interface CaseFile { path: string; label: string; expectRole?: DocRole }
 interface CasePage { title: string; path: string }
@@ -30,51 +29,6 @@ const cacheDir = process.env.DEMO_CACHE || path.join(os.tmpdir(), 'ri-demo-cache
 mkdirSync(cacheDir, { recursive: true });
 const t0 = Date.now();
 const secs = () => `${Math.round((Date.now() - t0) / 1000)} s`;
-
-// ------------------------------------------------------------ read files like the browser (src/lib/client/extract.ts)
-const tidy = (s: string) => s.replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{4,}/g, '\n\n\n').trim();
-async function readDoc(file: string): Promise<{ text: string; pages?: number; low: number[] }> {
-  const ext = file.toLowerCase().split('.').pop();
-  if (ext === 'pdf') {
-    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-    const task = pdfjs.getDocument({ data: new Uint8Array(readFileSync(file)), useSystemFonts: true, isEvalSupported: false });
-    const doc = await task.promise;
-    const parts: string[] = [];
-    const low: number[] = [];
-    for (let p = 1; p <= doc.numPages; p++) {
-      const page = await doc.getPage(p);
-      const content = await page.getTextContent();
-      let text = '';
-      let lastY: number | null = null;
-      for (const item of content.items as { str?: string; transform?: number[]; hasEOL?: boolean }[]) {
-        if (typeof item.str !== 'string') continue;
-        const y = item.transform?.[5] ?? null;
-        if (lastY !== null && y !== null && Math.abs(y - lastY) > 2 && !text.endsWith('\n')) text += '\n';
-        text += item.str;
-        if (item.hasEOL) text += '\n';
-        lastY = y;
-      }
-      text = tidy(text);
-      if (text.replace(/\s/g, '').length < 40 && (p < doc.numPages || low.length === p - 1)) low.push(p);
-      parts.push(`[Page ${p}]\n${text}`);
-    }
-    const n = doc.numPages;
-    await task.destroy();
-    return { text: parts.join('\n\n'), pages: n, low };
-  }
-  if (ext === 'docx') {
-    const mammoth = (await import('mammoth')).default;
-    return { text: tidy((await mammoth.extractRawText({ path: file })).value), low: [] };
-  }
-  return { text: tidy(readFileSync(file, 'utf8').replace(/^﻿/, '')), low: [] };
-}
-
-async function pool<T, R>(xs: T[], n: number, fn: (x: T, i: number) => Promise<R>): Promise<R[]> {
-  const out: R[] = new Array(xs.length);
-  let next = 0;
-  await Promise.all(Array.from({ length: Math.min(n, xs.length) }, async () => { while (next < xs.length) { const i = next++; out[i] = await fn(xs[i], i); } }));
-  return out;
-}
 
 const docs = await Promise.all(
   c.files.map(async (f, i) => {
@@ -94,43 +48,9 @@ if (!rebuild && existsSync(cacheFile)) {
   ({ rules, roles, dropped } = JSON.parse(readFileSync(cacheFile, 'utf8')));
   console.log(`rules from cache: ${rules.length}`);
 } else {
-  const files = docs
-    .map((d) => `<file id="${d.id}" name="${d.name.replace(/"/g, "'").slice(0, 200)}" type="${d.kind}" characters="${d.text.length}">\n${d.text.slice(0, 5000)}${d.text.length > 7000 ? `\n[...]\n${d.text.slice(-1200)}` : ''}\n</file>`)
-    .join('\n\n');
-  const cls = await llmObject({ tier: 'fast', system: CLASSIFY_SYSTEM, prompt: `The user is writing: ${c.description || '(not stated)'}\n\nFiles (start and end of each):\n\n${files}\n\nReturn every file id exactly once.`, schema: classifySchema, maxOutputTokens: 6000 });
-  roles = Object.fromEntries(docs.map((d) => [d.id, cls.documents.find((x) => x.id === d.id)?.role ?? 'other']));
+  roles = Object.fromEntries(Object.entries(await classifyDocs(c.description, docs)).map(([id, x]) => [id, x.role]));
   console.log(`sorted (${secs()}): ${docs.map((d) => `${d.id}=${roles[d.id]}`).join(' ')}`);
-  const sources = docs.filter((d) => SOURCE_ROLES.includes(roles[d.id]));
-  const otherDocs = docs.filter((d) => !sources.includes(d)).map((d) => `${d.name} (${roles[d.id]})`);
-  const jobs = sources.flatMap((d) => { const parts = splitDocument(d.text); return parts.map((p, i) => ({ d, p, n: i + 1, of: parts.length })); });
-  const per = await pool(jobs, 6, (j) => extractRules({ id: j.d.id, name: j.d.name, text: j.p.text }, { name: c.name, description: c.description, otherDocs, part: { n: j.n, of: j.of, offset: j.p.offset } }));
-  rules = per.flatMap((p) => p.rules);
-  dropped = per.flatMap((p) => p.dropped);
-  const counts: Record<string, number> = {};
-  for (const r of rules) counts[r.category] = (counts[r.category] ?? 0) + 1;
-  let categories = Object.keys(counts);
-  try {
-    const g = await groupCategories(categories, counts);
-    rules = rules.map((r) => ({ ...r, category: g.map[r.category] ?? r.category }));
-    categories = g.order.filter((x) => rules.some((r) => r.category === x));
-  } catch (err) {
-    console.log(`grouping failed: ${(err as Error).message}`);
-  }
-  rules = categories.flatMap((x) => rules.filter((r) => r.category === x));
-  rules.forEach((r, i) => (r.id = `R${i + 1}`));
-  console.log(`rules (${secs()}): ${rules.length} in ${categories.length} groups from ${jobs.length} parts; ${dropped.length} dropped`);
-  const batches: Requirement[][] = [];
-  for (let i = 0; i < rules.length; i += 6) batches.push(rules.slice(i, i + 6));
-  let failed = 0;
-  const done = await pool(batches, 8, async (b) => {
-    for (let a = 0; a < 2; a++) {
-      try { return await writeCriteria(b, { description: c.description }); } catch { /* retry */ }
-    }
-    failed += b.length;
-    return b;
-  });
-  rules = done.flat();
-  console.log(`criteria (${secs()})${failed ? `: ${failed} rules without criteria` : ''}`);
+  ({ rules, dropped } = await buildRules(docs.map((d) => ({ ...d, role: roles[d.id] })), { name: c.name, description: c.description }, (s) => console.log(`${s} (${secs()})`)));
   writeFileSync(cacheFile, JSON.stringify({ rules, roles, dropped }));
 }
 for (const d of docs) {

@@ -34,6 +34,61 @@ export async function deleteProject(id: string): Promise<void> {
   await set(INDEX, idx.filter((x) => x.id !== id), store);
 }
 
+interface SeedEntry {
+  id: string;
+  version: number;
+  file: string;
+  name: string;
+  /** The snapshot's source project: a local copy not changed since then may be replaced by the snapshot. */
+  replaceIfNotNewerThan?: number;
+}
+
+const SEEDED = 'seeded';
+
+/**
+ * Projects published with the app (public/seed/index.json), ready to open on any device. Each version is added to
+ * this browser once. A project that already exists here is replaced only when it has not been changed since the
+ * snapshot was taken (or since an earlier seed was added), so local work is never overwritten. A seeded project the
+ * user deletes stays deleted. Returns true when the project list changed.
+ */
+export async function seedProjects(): Promise<boolean> {
+  if (!store) return false;
+  let list: SeedEntry[];
+  try {
+    const r = await fetch('/seed/index.json', { cache: 'no-cache' });
+    if (!r.ok) return false;
+    list = await r.json();
+  } catch {
+    return false;
+  }
+  if (!Array.isArray(list)) return false;
+  const done = new Set((await get<string[]>(SEEDED, store)) ?? []);
+  let changed = false;
+  for (const s of list) {
+    const key = `${s.id}@${s.version}`;
+    if (done.has(key)) continue;
+    try {
+      const existing = await get<Project>(`p:${s.id}`, store);
+      const replaceable =
+        !existing ||
+        (s.replaceIfNotNewerThan !== undefined && existing.updatedAt <= s.replaceIfNotNewerThan) ||
+        (existing.seed !== undefined && existing.updatedAt <= existing.seed.at);
+      if (replaceable) {
+        const res = await fetch(`/seed/${encodeURIComponent(s.file)}`);
+        if (!res.ok) continue;
+        const at = Date.now();
+        await saveProject(migrateProject({ ...((await res.json()) as Project), updatedAt: at, seed: { version: s.version, at } }));
+        changed = true;
+      }
+      done.add(key);
+      await set(SEEDED, [...done], store);
+    } catch {
+      // Try again on the next visit.
+    }
+  }
+  return changed;
+}
+
 export function newId(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 }
